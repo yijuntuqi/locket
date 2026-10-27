@@ -54,7 +54,8 @@ export function layoutWallCards(
   placements.forEach((p, index) => {
     const phi = ((p.angleDeg + angleDeg) * Math.PI) / 180
     const cos = Math.cos(phi)
-    if (cos <= 0.05) return
+    // 可见弧放宽到 cos > -0.3：正前 + 两侧入画，呈现 3D 层次
+    if (cos < -0.3) return
     const xC = radius * Math.sin(phi)
     const zC = radius * (cos - 1)
     const yT = -zC * Math.sin(tiltRad)
@@ -64,8 +65,9 @@ export function layoutWallCards(
       index,
       x: width / 2 + xC * factor,
       y: height / 2 - yT * factor,
-      width: scaledWidth * factor,
-      opacity: Math.min(1, cos * 1.5),
+      // 横向透视收窄：与 CSS rotateY 的视觉效果一致
+      width: scaledWidth * factor * Math.abs(cos),
+      opacity: cos > 0 ? Math.min(1, 0.75 + cos * 0.25) : 0.6,
       depth: zT,
     })
   })
@@ -89,10 +91,10 @@ export function drawAuroraBackground(
 
   const maxDim = Math.max(width, height)
   const blobs = [
-    { x: 0.2, y: 0.15, r: 0.55, color: 'rgba(20, 184, 166, 0.30)' },
-    { x: 0.85, y: 0.3, r: 0.5, color: 'rgba(139, 92, 246, 0.28)' },
-    { x: 0.15, y: 0.85, r: 0.5, color: 'rgba(236, 72, 153, 0.22)' },
-    { x: 0.6, y: 0.7, r: 0.4, color: 'rgba(56, 189, 248, 0.16)' },
+    { x: 0.2, y: 0.15, r: 0.75, color: 'rgba(20, 184, 166, 0.20)' },
+    { x: 0.85, y: 0.3, r: 0.7, color: 'rgba(139, 92, 246, 0.18)' },
+    { x: 0.15, y: 0.85, r: 0.7, color: 'rgba(236, 72, 153, 0.14)' },
+    { x: 0.6, y: 0.7, r: 0.6, color: 'rgba(56, 189, 248, 0.12)' },
   ] as const
   ctx.globalCompositeOperation = 'lighter'
   for (const b of blobs) {
@@ -106,11 +108,11 @@ export function drawAuroraBackground(
   }
   ctx.globalCompositeOperation = 'source-over'
 
-  for (let i = 0; i < 160; i++) {
+  for (let i = 0; i < 90; i++) {
     const x = rand() * width
     const y = rand() * height
-    const r = 0.4 + rand() * 1.1
-    ctx.globalAlpha = 0.15 + rand() * 0.6
+    const r = 0.8 + rand() * 1.4
+    ctx.globalAlpha = 0.2 + rand() * 0.6
     ctx.fillStyle = '#ffffff'
     ctx.beginPath()
     ctx.arc(x, y, r, 0, Math.PI * 2)
@@ -159,9 +161,9 @@ function drawCard(
 
   ctx.save()
   ctx.globalAlpha = p.opacity
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.45)'
-  ctx.shadowBlur = Math.max(8, w * 0.08)
-  ctx.shadowOffsetY = w * 0.02
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.6)'
+  ctx.shadowBlur = Math.max(12, w * 0.14)
+  ctx.shadowOffsetY = w * 0.03
   traceCardPath(ctx, x, y, w, h, r)
   ctx.clip()
   ctx.drawImage(img, x, y, w, h)

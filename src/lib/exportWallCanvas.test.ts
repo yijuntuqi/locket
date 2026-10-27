@@ -67,13 +67,23 @@ describe('mulberry32', () => {
 })
 
 describe('layoutWallCards', () => {
-  it('8 张照片在 0 度视角下只保留朝向观察者的卡片，按远→近排序', () => {
+  it('8 张照片在 0 度视角下正前+两侧入画，按远→近排序', () => {
     const placements = layoutWallCards(8, 1200, 800, 0)
-    // 45° 步进下，cos>0.05 的有 0°/45°/315° 三张
-    expect(placements.length).toBe(3)
-    // 远（45°/315°，depth 更负）先画，正前方（0°，depth≈0）最后画
+    // 45° 步进下，可见弧（cos>-0.3）含 0°/45°/90°/270°/315° 五张
+    expect(placements.length).toBe(5)
+    // 正前方（0°，depth 最大）最后画
     const last = placements[placements.length - 1]
     expect(last.depth).toBeGreaterThan(placements[0].depth)
+  })
+
+  it('侧面卡片带横向透视收窄（宽度随 cos 衰减）', () => {
+    const placements = layoutWallCards(8, 1200, 800, 0)
+    // 45° 与 315° 的卡片宽度应明显小于正前方
+    const front = placements.find((p) => p.depth > -1)!
+    const side = placements.filter((p) => p.depth < -1)
+    for (const s of side) {
+      expect(s.width).toBeLessThan(front.width * 0.8)
+    }
   })
 
   it('任意角度所有落点都在画布范围内', () => {
@@ -93,18 +103,24 @@ describe('layoutWallCards', () => {
 })
 
 describe('drawAuroraBackground', () => {
-  it('绘制底色渐变、辉光斑和星星', () => {
+  it('绘制底色渐变、辉光斑和少量大星星', () => {
     const { ctx, calls } = makeCtxStub()
     drawAuroraBackground(ctx, 800, 600, mulberry32(1))
 
     expect(calls.filter((c) => c.method === 'createLinearGradient').length).toBe(1)
     expect(calls.filter((c) => c.method === 'createRadialGradient').length).toBeGreaterThanOrEqual(3)
-    expect(calls.filter((c) => c.method === 'arc').length).toBeGreaterThanOrEqual(100)
+    const stars = calls.filter((c) => c.method === 'arc')
+    expect(stars.length).toBeGreaterThanOrEqual(60)
+    expect(stars.length).toBeLessThanOrEqual(120)
+    // 星星半径上限（大颗但不夸张）
+    for (const s of stars) {
+      expect(s.args[2] as number).toBeLessThanOrEqual(2.5)
+    }
   })
 })
 
 describe('renderWallToCanvas', () => {
-  it('为每张朝前的照片调用 drawImage', async () => {
+  it('为每张入画的照片调用 drawImage', async () => {
     const { ctx, calls } = makeCtxStub()
     const photos = Array.from({ length: 8 }, (_, i) => ({
       id: `p${i}`,
@@ -112,7 +128,7 @@ describe('renderWallToCanvas', () => {
     }))
     await renderWallToCanvas(ctx, 1200, 800, photos, 0)
 
-    expect(calls.filter((c) => c.method === 'drawImage').length).toBe(3)
+    expect(calls.filter((c) => c.method === 'drawImage').length).toBe(5)
   })
 
   it('照片加载失败时抛错', async () => {
