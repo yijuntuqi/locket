@@ -26,6 +26,7 @@ const sampleAlbums: Album[] = [
     owner_id: 'u1',
     name: '旅行',
     allow_collab_upload: false,
+    wall_layout: 'cylinder',
     created_at: '2026-10-27T00:00:00Z',
   },
   {
@@ -33,6 +34,7 @@ const sampleAlbums: Album[] = [
     owner_id: 'u1',
     name: '日常',
     allow_collab_upload: false,
+    wall_layout: 'cylinder',
     created_at: '2026-10-27T01:00:00Z',
   },
 ]
