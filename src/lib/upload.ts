@@ -54,7 +54,7 @@ export async function uploadPhotos(
         .upload(storagePath, compressed)
       if (uploadError) throw uploadError
 
-      const { data, error: insertError } = await supabase
+      let insertResult = await supabase
         .from('photos')
         .insert({
           album_id: albumId,
@@ -64,6 +64,29 @@ export async function uploadPhotos(
         })
         .select()
         .single()
+
+      if (insertResult.error?.code === '23505') {
+        // 并发上传撞 (album_id, sort_order) 唯一约束：重查最新值重试一次
+        const { data: latest } = await supabase
+          .from('photos')
+          .select('sort_order')
+          .eq('album_id', albumId)
+        if (latest) {
+          sortOrder = nextSortOrder((latest ?? []) as Pick<Photo, 'sort_order'>[])
+        }
+        insertResult = await supabase
+          .from('photos')
+          .insert({
+            album_id: albumId,
+            uploader_id: ownerId,
+            storage_path: storagePath,
+            sort_order: sortOrder,
+          })
+          .select()
+          .single()
+      }
+
+      const { data, error: insertError } = insertResult
       if (insertError) {
         await supabase.storage.from('photos').remove([storagePath])
         throw insertError

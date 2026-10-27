@@ -35,3 +35,30 @@ export async function deletePhoto(photo: Photo): Promise<void> {
   const { error } = await supabase.from('photos').delete().eq('id', photo.id)
   if (error) throw error
 }
+
+export function reorderPhotos<T extends { id: string }>(
+  items: T[],
+  fromIndex: number,
+  toIndex: number
+): T[] {
+  if (fromIndex === toIndex) return items
+  if (fromIndex < 0 || toIndex < 0 || fromIndex >= items.length || toIndex >= items.length) {
+    return items
+  }
+  const reordered = [...items]
+  const [moved] = reordered.splice(fromIndex, 1)
+  reordered.splice(toIndex, 0, moved)
+  return reordered.map((item, i) => ({ ...item, sort_order: i }) as T)
+}
+
+export async function persistSortOrder(
+  updates: { id: string; sort_order: number }[]
+): Promise<void> {
+  for (const u of updates) {
+    const { error } = await supabase
+      .from('photos')
+      .update({ sort_order: u.sort_order })
+      .eq('id', u.id)
+    if (error) throw error
+  }
+}

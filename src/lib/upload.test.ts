@@ -10,6 +10,9 @@ const calls: string[] = []
 const uploadedPaths: string[] = []
 let insertedSortOrders: number[] = []
 let failInsertForFirst = false
+let insertCodes: (string | null)[] = []
+let retrySortOrders: number[] | null = null
+let selectCalls = 0
 
 const mockStorageUpload = vi.fn(async (path: string) => {
   calls.push('upload:' + path)
@@ -29,16 +32,22 @@ vi.mock('@/lib/supabase', () => ({
         select: () => ({
           eq: async () => {
             calls.push('select-sort')
+            selectCalls += 1
+            if (retrySortOrders && selectCalls > 1) {
+              return { data: retrySortOrders.map((so) => ({ sort_order: so })), error: null }
+            }
             return { data: [], error: null }
           },
         }),
         insert: (row: { sort_order: number }) => {
           calls.push('insert:' + row.sort_order)
           insertedSortOrders.push(row.sort_order)
+          const code = insertCodes.length ? insertCodes.shift()! : null
           const shouldFail = failInsertForFirst && insertedSortOrders.length === 1
           return {
             select: () => ({
               single: async () => {
+                if (code) return { data: null, error: { code, message: 'conflict' } }
                 if (shouldFail) return { data: null, error: { message: 'insert failed' } }
                 return { data: { ...row, id: 'p' + row.sort_order }, error: null }
               },
@@ -73,6 +82,33 @@ describe('uploadPhotos', () => {
     uploadedPaths.length = 0
     insertedSortOrders = []
     failInsertForFirst = false
+    insertCodes = []
+    retrySortOrders = null
+    selectCalls = 0
+  })
+
+  it('插入撞唯一约束(23505)时重算 sort_order 重试一次并成功', async () => {
+    insertCodes = ['23505']
+    retrySortOrders = [7]
+    const summary = await uploadPhotos('album1', 'user1', [makeFile('a.jpg')])
+
+    expect(summary.results).toHaveLength(1)
+    expect(summary.failures).toEqual([])
+    expect(insertedSortOrders).toEqual([0, 8])
+    // 撞键重试不清理已上传的文件
+    expect(mockStorageRemove).not.toHaveBeenCalled()
+  })
+
+  it('重试仍失败则计入 failures 不中断其他文件', async () => {
+    insertCodes = ['23505', '23505', null]
+    retrySortOrders = [7]
+    const files = [makeFile('bad.jpg'), makeFile('good.jpg')]
+    const summary = await uploadPhotos('album1', 'user1', files)
+
+    expect(summary.results).toHaveLength(1)
+    expect(summary.results[0].fileName).toBe('good.jpg')
+    expect(summary.failures).toHaveLength(1)
+    expect(summary.failures[0].fileName).toBe('bad.jpg')
   })
 
   it('按压缩→上传→写行的顺序处理，路径为 owner/album/uuid.webp', async () => {
