@@ -54,11 +54,10 @@ export function reorderPhotos<T extends { id: string }>(
 export async function persistSortOrder(
   updates: { id: string; sort_order: number }[]
 ): Promise<void> {
-  for (const u of updates) {
-    const { error } = await supabase
-      .from('photos')
-      .update({ sort_order: u.sort_order })
-      .eq('id', u.id)
-    if (error) throw error
-  }
+  // 走 RPC 而非逐行 UPDATE：唯一索引逐行即时检查，客户端重排赋值必然撞键，
+  // 函数内部先整体偏移再写终值，一个事务完成
+  const { error } = await supabase.rpc('reorder_photos', {
+    ordered_ids: updates.map((u) => u.id),
+  })
+  if (error) throw error
 }

@@ -1,26 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => {
-  const updateCalls: { id: string; sort_order: number }[] = []
-  let failId: string | null = null
+  const rpcCalls: { fn: string; args: Record<string, unknown> }[] = []
   return {
-    updateCalls,
-    setFailId: (id: string | null) => {
-      failId = id
-    },
+    rpcCalls,
     supabase: {
-      from: (table: string) => {
-        if (table !== 'photos') throw new Error('unexpected table ' + table)
-        return {
-          update: (patch: { sort_order: number }) => ({
-            eq: async (col: string, id: string) => {
-              if (col !== 'id') throw new Error('unexpected col ' + col)
-              updateCalls.push({ id, sort_order: patch.sort_order })
-              if (failId === id) return { data: null, error: { message: 'update failed' } }
-              return { data: {}, error: null }
-            },
-          }),
-        }
+      rpc: (fn: string, args: Record<string, unknown>) => {
+        rpcCalls.push({ fn, args })
+        return Promise.resolve({ data: null, error: null })
       },
     },
   }
@@ -72,28 +59,16 @@ describe('reorderPhotos', () => {
 
 describe('persistSortOrder', () => {
   beforeEach(() => {
-    mocks.updateCalls.length = 0
-    mocks.setFailId(null)
+    mocks.rpcCalls.length = 0
   })
 
-  it('对每条调用 update 并传 sort_order，顺序与入参一致', async () => {
+  it('一次 RPC 调用 reorder_photos，按数组顺序传 ordered_ids', async () => {
     await persistSortOrder([
       { id: 'b', sort_order: 0 },
       { id: 'a', sort_order: 1 },
     ])
-    expect(mocks.updateCalls).toEqual([
-      { id: 'b', sort_order: 0 },
-      { id: 'a', sort_order: 1 },
+    expect(mocks.rpcCalls).toEqual([
+      { fn: 'reorder_photos', args: { ordered_ids: ['b', 'a'] } },
     ])
-  })
-
-  it('任何一条失败即 throw', async () => {
-    mocks.setFailId('b')
-    await expect(
-      persistSortOrder([
-        { id: 'a', sort_order: 0 },
-        { id: 'b', sort_order: 1 },
-      ])
-    ).rejects.toThrow('update failed')
   })
 })
