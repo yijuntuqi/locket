@@ -8,6 +8,8 @@ interface PhotoWallProps {
   photos: FakePhoto[]
   cardWidthPx?: number
   gapPx?: number
+  /** 俯视倾斜角（度），让圆柱呈现从斜上方往下看的纵深 */
+  tiltDeg?: number
   onDeletePhoto?: (id: string) => void
 }
 
@@ -15,6 +17,7 @@ export function PhotoWall({
   photos,
   cardWidthPx = 240,
   gapPx = 24,
+  tiltDeg = 18,
   onDeletePhoto,
 }: PhotoWallProps) {
   const { angleDeg, isDragging, handlers } = usePhotoWallRotation()
@@ -55,7 +58,7 @@ export function PhotoWall({
         className={`absolute inset-0 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
         style={{
           transformStyle: 'preserve-3d',
-          transform: `translateZ(-${radiusPx}px) rotateY(${angleDeg}deg)`,
+          transform: `rotateX(${tiltDeg}deg) translateZ(-${radiusPx}px) rotateY(${angleDeg}deg)`,
           touchAction: 'none',
         }}
       >

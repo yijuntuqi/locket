@@ -48,6 +48,11 @@ export function usePhotoWallRotation(opts: UsePhotoWallRotationOptions = {}) {
   }, [autoRotateDegPerSec, inertiaHalfLifeSec])
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    // 只响应主键（左键/单指），右键等辅助键交给组件自身菜单逻辑
+    if (e.button !== 0) return
+    // 交互控件（删除按钮等）上的按下不启动拖拽，否则会因指针捕获吞掉 click/contextmenu
+    const target = e.target as HTMLElement
+    if (target.closest('button, a, input, textarea, select, [data-no-drag]')) return
     if (dragRef.current) return
     dragRef.current = {
       pointerId: e.pointerId,

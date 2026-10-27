@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
-import { cleanup, render } from '@testing-library/react'
+import { cleanup, fireEvent, render } from '@testing-library/react'
 import type { FakePhoto } from '@/lib/fakePhotos'
 import { PhotoWall } from './PhotoWall'
 
@@ -50,5 +50,84 @@ describe('PhotoWall 组件', () => {
     }
 
     expect(captionReads).toBe(readsAfterMount)
+  })
+})
+
+describe('删除交互守卫', () => {
+  function stubPointerCapture(surface: Element) {
+    ;(surface as HTMLElement).setPointerCapture = vi.fn()
+    ;(surface as HTMLElement).releasePointerCapture = vi.fn()
+    ;(surface as HTMLElement).hasPointerCapture = vi.fn(() => true)
+    return surface as HTMLElement
+  }
+
+  it('在删除按钮上按下左键不会启动拖拽（不吞掉后续 click）', () => {
+    const onDelete = vi.fn()
+    const { container } = render(
+      <PhotoWall photos={[makePhoto(0)]} onDeletePhoto={onDelete} />
+    )
+    const surface = stubPointerCapture(
+      container.querySelector('[data-testid="wall-drag-surface"]')!
+    )
+    const button = container.querySelector('button[aria-label^="删除"]')!
+
+    fireEvent.pointerDown(button, { button: 0 })
+
+    expect(surface.className).toContain('cursor-grab')
+    expect(surface.setPointerCapture).not.toHaveBeenCalled()
+  })
+
+  it('左键点击删除按钮仍会触发 onDelete', () => {
+    const onDelete = vi.fn()
+    const { container } = render(
+      <PhotoWall photos={[makePhoto(0)]} onDeletePhoto={onDelete} />
+    )
+    stubPointerCapture(container.querySelector('[data-testid="wall-drag-surface"]')!)
+    const button = container.querySelector('button[aria-label^="删除"]')!
+
+    fireEvent.click(button)
+
+    expect(onDelete).toHaveBeenCalledWith('p0')
+  })
+
+  it('右键（辅助键）在照片上不会启动拖拽', () => {
+    const { container } = render(<PhotoWall photos={[makePhoto(0)]} />)
+    const surface = stubPointerCapture(
+      container.querySelector('[data-testid="wall-drag-surface"]')!
+    )
+    const img = container.querySelector('img')!
+
+    fireEvent.pointerDown(img, { button: 2 })
+
+    expect(surface.className).toContain('cursor-grab')
+    expect(surface.setPointerCapture).not.toHaveBeenCalled()
+  })
+
+  it('左键点在照片上仍会正常启动拖拽', () => {
+    const { container } = render(<PhotoWall photos={[makePhoto(0)]} />)
+    const surface = stubPointerCapture(
+      container.querySelector('[data-testid="wall-drag-surface"]')!
+    )
+    const img = container.querySelector('img')!
+
+    fireEvent.pointerDown(img, { button: 0 })
+
+    expect(surface.className).toContain('cursor-grabbing')
+    expect(surface.setPointerCapture).toHaveBeenCalled()
+  })
+})
+
+describe('俯视倾斜与背板', () => {
+  it('场景容器带固定 X 轴俯视倾斜', () => {
+    const { container } = render(<PhotoWall photos={[makePhoto(0)]} />)
+    const surface = container.querySelector('[data-testid="wall-drag-surface"]')!
+    expect((surface as HTMLElement).style.transform).toMatch(/rotateX\(18deg\)/)
+  })
+
+  it('每张卡片渲染可看见的背板面', () => {
+    const { container } = render(
+      <PhotoWall photos={[makePhoto(0), makePhoto(1), makePhoto(2)]} />
+    )
+    expect(container.querySelectorAll('[data-testid="card-back"]').length).toBe(3)
   })
 })
