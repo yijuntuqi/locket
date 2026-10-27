@@ -65,10 +65,19 @@ interface HeartCanvasProps {
   scalePx?: number
   /** 俯视倾斜角（度），负值 = 从斜上方看 */
   tiltDeg?: number
+  /** 自动旋转角速度（度/秒），0 = 不自转 */
+  autoRotateDegPerSec?: number
 }
 
-export function HeartCanvas({ photos, scalePx, tiltDeg = -12 }: HeartCanvasProps) {
-  const { angleDeg, isDragging, handlers } = usePhotoWallRotation()
+export function HeartCanvas({
+  photos,
+  scalePx,
+  tiltDeg = -12,
+  autoRotateDegPerSec,
+}: HeartCanvasProps) {
+  const { angleDeg, isDragging, handlers } = usePhotoWallRotation(
+    autoRotateDegPerSec === undefined ? {} : { autoRotateDegPerSec }
+  )
   const [mounted, setMounted] = useState(false)
   useEffect(() => {
     const raf = requestAnimationFrame(() => setMounted(true))

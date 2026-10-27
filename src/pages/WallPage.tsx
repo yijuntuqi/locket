@@ -39,6 +39,7 @@ export default function WallPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('wall')
   const [sortMode, setSortMode] = useState(false)
   const [heartMode, setHeartMode] = useState(false)
+  const [autoRotate, setAutoRotate] = useState(true)
   const [lightbox, setLightbox] = useState<{
     photos: { id: string; url: string }[]
     index: number
@@ -240,9 +241,13 @@ export default function WallPage() {
         ) : (
           <div className="h-full">
             {heartMode ? (
-              <HeartCanvas photos={wallItems} />
+              <HeartCanvas photos={wallItems} autoRotateDegPerSec={autoRotate ? 6 : 0} />
             ) : (
-              <PhotoWall photos={wallItems} onDeletePhoto={(id) => void handleDeletePhoto(id)} />
+              <PhotoWall
+                photos={wallItems}
+                autoRotateDegPerSec={autoRotate ? 6 : 0}
+                onDeletePhoto={(id) => void handleDeletePhoto(id)}
+              />
             )}
           </div>
         )
@@ -286,6 +291,17 @@ export default function WallPage() {
           }`}
         >
           心形
+        </button>
+        <button
+          type="button"
+          aria-pressed={autoRotate}
+          disabled={viewMode !== 'wall'}
+          onClick={() => setAutoRotate((prev) => !prev)}
+          className={`rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 ${
+            autoRotate ? 'bg-white/20 text-white' : 'text-white/80 hover:text-white'
+          }`}
+        >
+          自动旋转
         </button>
       </Dock>
     </div>

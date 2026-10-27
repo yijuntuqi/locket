@@ -228,3 +228,27 @@ describe('WallPage 心形模式（P4）', () => {
     expect((screen.getByRole('button', { name: '心形' }) as HTMLButtonElement).disabled).toBe(true)
   })
 })
+
+describe('WallPage 自动旋转开关（P4）', () => {
+  const PHOTOS = [photo('p1', 0, 'albumRotate', '2025-10-01T08:00:00Z')]
+
+  it('Dock 自动旋转默认开启，点击关闭再开启', async () => {
+    await renderAlbumPage('albumRotate', '相册Rotate', PHOTOS)
+    const btn = screen.getByRole('button', { name: '自动旋转' })
+    expect(btn.getAttribute('aria-pressed')).toBe('true')
+
+    fireEvent.click(btn)
+    expect(btn.getAttribute('aria-pressed')).toBe('false')
+
+    fireEvent.click(btn)
+    expect(btn.getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('非 3D 墙视图下自动旋转按钮禁用', async () => {
+    await renderAlbumPage('albumRotate', '相册Rotate', PHOTOS)
+    fireEvent.click(screen.getByRole('button', { name: '瀑布流' }))
+    expect(
+      (screen.getByRole('button', { name: '自动旋转' }) as HTMLButtonElement).disabled
+    ).toBe(true)
+  })
+})

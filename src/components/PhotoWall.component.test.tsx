@@ -138,3 +138,12 @@ describe('俯视倾斜与背板', () => {
     }
   })
 })
+
+describe('自动旋转开关', () => {
+  it('autoRotateDegPerSec 传 0 时角度不随时间变化', async () => {
+    const { container } = render(<PhotoWall photos={[makePhoto(0)]} autoRotateDegPerSec={0} />)
+    await new Promise((r) => setTimeout(r, 120))
+    const surface = container.querySelector('[data-testid="wall-drag-surface"]') as HTMLElement
+    expect(surface.style.transform).toContain('rotateY(0deg)')
+  })
+})
