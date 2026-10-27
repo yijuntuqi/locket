@@ -35,29 +35,3 @@ export async function deletePhoto(photo: Photo): Promise<void> {
   const { error } = await supabase.from('photos').delete().eq('id', photo.id)
   if (error) throw error
 }
-
-export function reorderPhotos<T extends { id: string }>(
-  items: T[],
-  fromIndex: number,
-  toIndex: number
-): T[] {
-  if (fromIndex === toIndex) return items
-  if (fromIndex < 0 || toIndex < 0 || fromIndex >= items.length || toIndex >= items.length) {
-    return items
-  }
-  const reordered = [...items]
-  const [moved] = reordered.splice(fromIndex, 1)
-  reordered.splice(toIndex, 0, moved)
-  return reordered.map((item, i) => ({ ...item, sort_order: i }) as T)
-}
-
-export async function persistSortOrder(
-  updates: { id: string; sort_order: number }[]
-): Promise<void> {
-  // 走 RPC 而非逐行 UPDATE：唯一索引逐行即时检查，客户端重排赋值必然撞键，
-  // 函数内部先整体偏移再写终值，一个事务完成
-  const { error } = await supabase.rpc('reorder_photos', {
-    ordered_ids: updates.map((u) => u.id),
-  })
-  if (error) throw error
-}

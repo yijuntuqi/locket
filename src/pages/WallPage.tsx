@@ -1,30 +1,18 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { PhotoWall } from '@/components/PhotoWall'
 import { ALBUM_UPDATED_EVENT } from '@/components/RealtimeListener'
-import { MasonryView } from '@/components/wall/MasonryView'
 import { Dock } from '@/components/wall/Dock'
 import { HeartCanvas } from '@/components/wall/HeartCanvas'
-import { PhotoLightbox } from '@/components/wall/PhotoLightbox'
-import { SortableGridView } from '@/components/wall/SortableGridView'
-import { TimelineView } from '@/components/wall/TimelineView'
 import { UploadButton } from '@/components/wall/UploadButton'
 import type { FakePhoto } from '@/lib/fakePhotos'
 import { glassPill } from '@/lib/glass'
-import { deletePhoto, listPhotosWithUrls, persistSortOrder, reorderPhotos } from '@/lib/photos'
+import { deletePhoto, listPhotosWithUrls } from '@/lib/photos'
 import { publishAlbumEvent } from '@/lib/realtime'
 import { supabase } from '@/lib/supabase'
 import type { Album, PhotoWithUrl } from '@/lib/types'
 import { uploadPhotos } from '@/lib/upload'
-
-type ViewMode = 'wall' | 'timeline' | 'masonry'
-
-const VIEW_LABELS: Record<ViewMode, string> = {
-  wall: '3D 墙',
-  timeline: '时间轴',
-  masonry: '瀑布流',
-}
 
 export default function WallPage() {
   const { albumId } = useParams<{ albumId: string }>()
@@ -37,28 +25,8 @@ export default function WallPage() {
   const [error, setError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadMessage, setUploadMessage] = useState<string | null>(null)
-  const [viewMode, setViewMode] = useState<ViewMode>('wall')
-  const [sortMode, setSortMode] = useState(false)
   const [heartMode, setHeartMode] = useState(false)
   const [autoRotate, setAutoRotate] = useState(true)
-  const [lightbox, setLightbox] = useState<{
-    photos: { id: string; url: string }[]
-    index: number
-  } | null>(null)
-
-  // 时间轴展示序（与 TimelineView 内部排序保持一致：created_at 新→旧）
-  const timelinePhotos = useMemo(
-    () => [...photos].sort((a, b) => b.created_at.localeCompare(a.created_at)),
-    [photos]
-  )
-  const timelineLightboxPhotos = useMemo(
-    () => timelinePhotos.map((p) => ({ id: p.id, url: p.url })),
-    [timelinePhotos]
-  )
-  const masonryLightboxPhotos = useMemo(
-    () => photos.map((p) => ({ id: p.id, url: p.url })),
-    [photos]
-  )
 
   const load = useCallback(async () => {
     const id = albumId
@@ -95,8 +63,6 @@ export default function WallPage() {
 
   useEffect(() => {
     albumIdRef.current = albumId
-    setLightbox(null)
-    setSortMode(false)
     setHeartMode(false)
     load()
       .catch(() => undefined)
@@ -153,17 +119,6 @@ export default function WallPage() {
     }
   }
 
-  async function handleReorder(from: number, to: number) {
-    if (from === to) return
-    const reordered = reorderPhotos(photos, from, to)
-    try {
-      await persistSortOrder(reordered.map((p) => ({ id: p.id, sort_order: p.sort_order })))
-      await load()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '排序保存失败')
-    }
-  }
-
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center text-white/60">
@@ -193,37 +148,9 @@ export default function WallPage() {
           ← 返回
         </Link>
         <div className="pointer-events-auto flex items-center gap-3">
-          <div className={`flex overflow-hidden ${glassPill}`}>
-            {(Object.keys(VIEW_LABELS) as ViewMode[]).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => setViewMode(mode)}
-                className={`px-3 py-1.5 text-sm transition-colors ${
-                  viewMode === mode
-                    ? 'bg-white/20 text-white'
-                    : 'text-white/60 hover:text-white'
-                }`}
-              >
-                {VIEW_LABELS[mode]}
-              </button>
-            ))}
-          </div>
           <span className={`px-3 py-1.5 text-sm text-white ${glassPill}`}>
             {album.name}
           </span>
-          {viewMode !== 'wall' && (
-            <button
-              type="button"
-              aria-pressed={sortMode}
-              onClick={() => setSortMode((prev) => !prev)}
-              className={`px-3 py-1.5 text-sm transition-colors ${glassPill} ${
-                sortMode ? 'bg-white/20 text-white' : 'text-white/60 hover:text-white'
-              }`}
-            >
-              排序
-            </button>
-          )}
           <UploadButton pending={uploading} onFiles={(fs) => void handleUpload(fs)} />
         </div>
       </div>
@@ -234,58 +161,29 @@ export default function WallPage() {
         </div>
       )}
 
-      {viewMode === 'wall' ? (
-        wallItems.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-white/50">
-            这个相册还没有照片，点右上角上传吧
-          </div>
-        ) : (
-          <div className="h-full">
-            {heartMode ? (
-              <HeartCanvas photos={wallItems} autoRotateDegPerSec={autoRotate ? 6 : 0} />
-            ) : (
-              <PhotoWall
-                photos={wallItems}
-                autoRotateDegPerSec={autoRotate ? 6 : 0}
-                onDeletePhoto={(id) => void handleDeletePhoto(id)}
-              />
-            )}
-          </div>
-        )
+      {wallItems.length === 0 ? (
+        <div className="flex h-full items-center justify-center text-white/50">
+          这个相册还没有照片，点右上角上传吧
+        </div>
       ) : (
-        <div className="h-full overflow-y-auto p-4 pt-20">
-          {sortMode ? (
-            <SortableGridView photos={photos} onReorder={(f, t) => void handleReorder(f, t)} />
-          ) : viewMode === 'timeline' ? (
-            <TimelineView
-              photos={photos}
-              onOpen={(i) =>
-                setLightbox({ photos: timelineLightboxPhotos, index: i })
-              }
-            />
+        <div className="h-full">
+          {heartMode ? (
+            <HeartCanvas photos={wallItems} autoRotateDegPerSec={autoRotate ? 6 : 0} />
           ) : (
-            <MasonryView
-              photos={photos}
-              onOpen={(i) => setLightbox({ photos: masonryLightboxPhotos, index: i })}
+            <PhotoWall
+              photos={wallItems}
+              autoRotateDegPerSec={autoRotate ? 6 : 0}
+              onDeletePhoto={(id) => void handleDeletePhoto(id)}
             />
           )}
         </div>
-      )}
-
-      {lightbox && (
-        <PhotoLightbox
-          photos={lightbox.photos}
-          index={lightbox.index}
-          onIndexChange={(index) => setLightbox((prev) => (prev ? { ...prev, index } : prev))}
-          onClose={() => setLightbox(null)}
-        />
       )}
 
       <Dock>
         <button
           type="button"
           aria-pressed={heartMode}
-          disabled={viewMode !== 'wall' || wallItems.length === 0}
+          disabled={wallItems.length === 0}
           onClick={() => setHeartMode((prev) => !prev)}
           className={`rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 ${
             heartMode ? 'bg-white/20 text-white' : 'text-white/80 hover:text-white'
@@ -296,7 +194,7 @@ export default function WallPage() {
         <button
           type="button"
           aria-pressed={autoRotate}
-          disabled={viewMode !== 'wall' || wallItems.length === 0}
+          disabled={wallItems.length === 0}
           onClick={() => setAutoRotate((prev) => !prev)}
           className={`rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 ${
             autoRotate ? 'bg-white/20 text-white' : 'text-white/80 hover:text-white'

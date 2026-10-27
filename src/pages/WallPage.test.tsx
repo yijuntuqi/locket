@@ -3,7 +3,6 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import WallPage from './WallPage'
-import { persistSortOrder } from '@/lib/photos'
 import type { PhotoWithUrl } from '@/lib/types'
 
 interface Deferred<T> {
@@ -49,7 +48,6 @@ vi.mock('@/lib/photos', async (importOriginal) => {
       return photoDef[albumId].promise
     },
     deletePhoto: vi.fn(),
-    persistSortOrder: vi.fn(async () => {}),
   }
 })
 
@@ -152,62 +150,6 @@ describe('WallPage 路由参数切换竞态', () => {
   })
 })
 
-describe('WallPage 三视图与排序', () => {
-  const PHOTOS = [
-    photo('p1', 0, 'albumP3', '2025-10-01T08:00:00Z'),
-    photo('p2', 1, 'albumP3', '2025-10-15T08:00:00Z'),
-  ]
-
-  it('头部提供 3D 墙/时间轴/瀑布流 三个切换按钮，3D 墙下无排序按钮', async () => {
-    await renderAlbumPage('albumP3', '相册P3', PHOTOS)
-    expect(screen.getByRole('button', { name: '3D 墙' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: '时间轴' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: '瀑布流' })).toBeTruthy()
-    expect(screen.queryByRole('button', { name: '排序' })).toBeNull()
-  })
-
-  it('切到时间轴渲染月分组，点图打开灯箱，Escape 关闭', async () => {
-    await renderAlbumPage('albumP3', '相册P3', PHOTOS)
-    fireEvent.click(screen.getByRole('button', { name: '时间轴' }))
-
-    expect(screen.getByText('2025 年 10 月')).toBeTruthy()
-    // DOM 顺序按时间新→旧：p2 在前
-    const imgs = document.body.querySelectorAll('img')
-    expect(imgs[0].getAttribute('src')).toBe('https://signed/p2')
-
-    fireEvent.click(imgs[0])
-    expect(screen.getByText('1 / 2')).toBeTruthy()
-
-    fireEvent.keyDown(window, { key: 'Escape' })
-    expect(screen.queryByText('1 / 2')).toBeNull()
-  })
-
-  it('瀑布流下开启排序模式显示可拖拽网格，drop 触发 persistSortOrder', async () => {
-    await renderAlbumPage('albumP3', '相册P3', PHOTOS)
-    fireEvent.click(screen.getByRole('button', { name: '瀑布流' }))
-    fireEvent.click(screen.getByRole('button', { name: '排序' }))
-
-    const items = document.body.querySelectorAll('[data-testid="sortable-item"]')
-    expect(items.length).toBe(2)
-
-    const dt = {
-      setData: vi.fn(),
-      getData: vi.fn((t: string) => (t === 'text/plain' ? '0' : '')),
-      effectAllowed: '',
-      dropEffect: '',
-    }
-    fireEvent.dragStart(items[0], { dataTransfer: dt })
-    fireEvent.drop(items[1], { dataTransfer: dt })
-
-    await vi.waitFor(() => {
-      expect(persistSortOrder).toHaveBeenCalledWith([
-        { id: 'p2', sort_order: 0 },
-        { id: 'p1', sort_order: 1 },
-      ])
-    })
-  })
-})
-
 describe('WallPage 心形模式（P4）', () => {
   const PHOTOS = [photo('p1', 0, 'albumHeart', '2025-10-01T08:00:00Z')]
 
@@ -222,11 +164,6 @@ describe('WallPage 心形模式（P4）', () => {
     expect(document.body.querySelector('[data-testid="heart-canvas"]')).toBeNull()
   })
 
-  it('非 3D 墙视图下心形按钮禁用', async () => {
-    await renderAlbumPage('albumHeart', '相册Heart', PHOTOS)
-    fireEvent.click(screen.getByRole('button', { name: '时间轴' }))
-    expect((screen.getByRole('button', { name: '心形' }) as HTMLButtonElement).disabled).toBe(true)
-  })
 })
 
 describe('WallPage 自动旋转开关（P4）', () => {
@@ -244,13 +181,6 @@ describe('WallPage 自动旋转开关（P4）', () => {
     expect(btn.getAttribute('aria-pressed')).toBe('true')
   })
 
-  it('非 3D 墙视图下自动旋转按钮禁用', async () => {
-    await renderAlbumPage('albumRotate', '相册Rotate', PHOTOS)
-    fireEvent.click(screen.getByRole('button', { name: '瀑布流' }))
-    expect(
-      (screen.getByRole('button', { name: '自动旋转' }) as HTMLButtonElement).disabled
-    ).toBe(true)
-  })
 })
 
 describe('WallPage 空相册（P4 修复）', () => {
