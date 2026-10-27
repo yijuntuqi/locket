@@ -51,14 +51,6 @@ describe('PhotoWall 组件', () => {
 
     expect(captionReads).toBe(readsAfterMount)
   })
-
-  it('angleRef 随自动旋转向外写入当前角度', async () => {
-    const angleRef = { current: -999 }
-    render(<PhotoWall photos={[makePhoto(0)]} angleRef={angleRef} />)
-    await new Promise((r) => setTimeout(r, 150))
-    // 角度可能为正也可能为负（旋转方向），关键是外部引用被持续写入
-    expect(angleRef.current).not.toBe(-999)
-  })
 })
 
 describe('删除交互守卫', () => {

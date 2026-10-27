@@ -10,7 +10,6 @@ import { SortableGridView } from '@/components/wall/SortableGridView'
 import { TimelineView } from '@/components/wall/TimelineView'
 import { UploadButton } from '@/components/wall/UploadButton'
 import type { FakePhoto } from '@/lib/fakePhotos'
-import { exportWallPng } from '@/lib/exportWallCanvas'
 import { deletePhoto, listPhotosWithUrls, persistSortOrder, reorderPhotos } from '@/lib/photos'
 import { publishAlbumEvent } from '@/lib/realtime'
 import { supabase } from '@/lib/supabase'
@@ -38,7 +37,6 @@ export default function WallPage() {
   const [uploadMessage, setUploadMessage] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('wall')
   const [sortMode, setSortMode] = useState(false)
-  const angleRef = useRef(0)
   const [lightbox, setLightbox] = useState<{
     photos: { id: string; url: string }[]
     index: number
@@ -135,20 +133,6 @@ export default function WallPage() {
       setUploadMessage(err instanceof Error ? err.message : '上传失败')
     } finally {
       setUploading(false)
-    }
-  }
-
-  async function handleExportWall() {
-    if (!album) return
-    try {
-      await exportWallPng(
-        wallItems.map((p) => ({ id: p.id, url: p.src })),
-        angleRef.current,
-        `locket-${album.name}.png`
-      )
-      toast.success('已导出 PNG')
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : '导出失败')
     }
   }
 
@@ -252,11 +236,7 @@ export default function WallPage() {
           </div>
         ) : (
           <div className="h-full">
-            <PhotoWall
-              photos={wallItems}
-              angleRef={angleRef}
-              onDeletePhoto={(id) => void handleDeletePhoto(id)}
-            />
+            <PhotoWall photos={wallItems} onDeletePhoto={(id) => void handleDeletePhoto(id)} />
           </div>
         )
       ) : (
@@ -291,11 +271,10 @@ export default function WallPage() {
       <Dock>
         <button
           type="button"
-          disabled={viewMode !== 'wall'}
-          onClick={() => void handleExportWall()}
-          className="rounded-full px-3 py-1.5 text-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+          onClick={() => undefined}
+          className="rounded-full px-3 py-1.5 text-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white"
         >
-          导出 PNG
+          心形
         </button>
       </Dock>
     </div>

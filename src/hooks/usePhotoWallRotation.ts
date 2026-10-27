@@ -4,14 +4,11 @@ import { stepRotation, type RotationState } from '@/lib/rotationPhysics'
 interface UsePhotoWallRotationOptions {
   autoRotateDegPerSec?: number
   inertiaHalfLifeSec?: number
-  /** 外部引用：每帧写入当前角度（导出 Canvas 重绘用） */
-  externalAngleRef?: { current: number }
 }
 
 export function usePhotoWallRotation(opts: UsePhotoWallRotationOptions = {}) {
   const autoRotateDegPerSec = opts.autoRotateDegPerSec ?? 6
   const inertiaHalfLifeSec = opts.inertiaHalfLifeSec ?? 0.8
-  const externalAngleRef = opts.externalAngleRef
 
   const [angleDeg, setAngleDeg] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
@@ -43,13 +40,12 @@ export function usePhotoWallRotation(opts: UsePhotoWallRotationOptions = {}) {
         const auto = reducedMotionRef.current ? 0 : autoRotateDegPerSec
         stateRef.current = stepRotation(stateRef.current, dt, auto, inertiaHalfLifeSec)
         setAngleDeg(stateRef.current.angleDeg)
-        if (externalAngleRef) externalAngleRef.current = stateRef.current.angleDeg
       }
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [autoRotateDegPerSec, inertiaHalfLifeSec, externalAngleRef])
+  }, [autoRotateDegPerSec, inertiaHalfLifeSec])
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     // 只响应主键（左键/单指），右键等辅助键交给组件自身菜单逻辑
