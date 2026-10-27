@@ -8,9 +8,15 @@ interface PhotoWallProps {
   photos: FakePhoto[]
   cardWidthPx?: number
   gapPx?: number
+  onDeletePhoto?: (id: string) => void
 }
 
-export function PhotoWall({ photos, cardWidthPx = 240, gapPx = 24 }: PhotoWallProps) {
+export function PhotoWall({
+  photos,
+  cardWidthPx = 240,
+  gapPx = 24,
+  onDeletePhoto,
+}: PhotoWallProps) {
   const { angleDeg, isDragging, handlers } = usePhotoWallRotation()
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState(0)
@@ -65,6 +71,7 @@ export function PhotoWall({ photos, cardWidthPx = 240, gapPx = 24 }: PhotoWallPr
             angleDeg={placements[i].angleDeg}
             radiusPx={placements[i].radiusPx}
             widthPx={scaledCardWidth}
+            onDelete={onDeletePhoto}
           />
         ))}
       </div>
