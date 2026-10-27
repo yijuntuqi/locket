@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { PhotoWall } from '@/components/PhotoWall'
@@ -13,6 +13,8 @@ import { uploadPhotos } from '@/lib/upload'
 
 export default function WallPage() {
   const { albumId } = useParams<{ albumId: string }>()
+  const albumIdRef = useRef(albumId)
+  const requestSeq = useRef(0)
   const [album, setAlbum] = useState<Album | null>(null)
   const [photos, setPhotos] = useState<Photo[]>([])
   const [wallItems, setWallItems] = useState<FakePhoto[]>([])
@@ -22,17 +24,23 @@ export default function WallPage() {
   const [uploadMessage, setUploadMessage] = useState<string | null>(null)
 
   const load = useCallback(async () => {
-    if (!albumId) return
+    const id = albumId
+    if (!id) return
+    const seq = ++requestSeq.current
+    // 参数切换或新一轮请求开始后，旧响应一律作废
+    const isStale = () => seq !== requestSeq.current || albumIdRef.current !== id
     try {
       const { data: albumData, error: albumError } = await supabase
         .from('albums')
         .select('*')
-        .eq('id', albumId)
+        .eq('id', id)
         .single()
+      if (isStale()) return
       if (albumError) throw albumError
       setAlbum(albumData as Album)
 
-      const photoList = await listPhotosWithUrls(albumId)
+      const photoList = await listPhotosWithUrls(id)
+      if (isStale()) return
       setPhotos(photoList)
       setWallItems(
         photoList.map((p) => ({
@@ -43,15 +51,17 @@ export default function WallPage() {
       )
       setError(null)
     } catch (err) {
+      if (isStale()) return
       setError(err instanceof Error ? err.message : '加载失败')
     }
   }, [albumId])
 
   useEffect(() => {
+    albumIdRef.current = albumId
     load()
       .catch(() => undefined)
       .finally(() => setLoading(false))
-  }, [load])
+  }, [albumId, load])
 
   useEffect(() => {
     if (!albumId) return

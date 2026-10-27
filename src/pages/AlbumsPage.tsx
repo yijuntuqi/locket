@@ -26,6 +26,7 @@ export default function AlbumsPage() {
   const [dialog, setDialog] = useState<DialogState>(null)
   const [dialogError, setDialogError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState<Album | null>(null)
 
   const refresh = useCallback(async () => {
     try {
@@ -146,7 +147,7 @@ export default function AlbumsPage() {
                     重命名
                   </button>
                   <button
-                    onClick={() => void handleDelete(album)}
+                    onClick={() => setConfirmDelete(album)}
                     disabled={pending}
                     className="text-sm text-red-400/80 hover:text-red-300 disabled:opacity-50"
                   >
@@ -168,6 +169,43 @@ export default function AlbumsPage() {
           onSubmit={(name) => void handleSubmit(name)}
           onClose={() => setDialog(null)}
         />
+      )}
+
+      {confirmDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          onClick={() => setConfirmDelete(null)}
+        >
+          <div
+            className="w-72 space-y-4 rounded-2xl border border-white/10 bg-slate-900 p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-white">
+              确认删除相册「{confirmDelete.name}」？里面的照片会一并删除，不可恢复。
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(null)}
+                className="rounded-md px-3 py-2 text-sm text-white/60 hover:text-white"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => {
+                  const target = confirmDelete
+                  setConfirmDelete(null)
+                  void handleDelete(target)
+                }}
+                className="rounded-md bg-red-500 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {pending ? '删除中…' : '确认删除'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

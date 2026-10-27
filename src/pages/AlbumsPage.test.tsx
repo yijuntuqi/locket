@@ -76,13 +76,27 @@ describe('AlbumsPage', () => {
     })).toBeUndefined()
   })
 
-  it('删除按钮点击后调用 deleteAlbum', async () => {
+  it('删除需二次确认：取消不删，确认才调用 deleteAlbum', async () => {
     mocks.deleteAlbum.mockResolvedValue(undefined)
     renderPage()
     const buttons = await screen.findAllByRole('button', { name: '删除' })
     fireEvent.click(buttons[0])
+
+    // 确认框出现，带相册名
+    expect(await screen.findByText(/确认删除相册「旅行」/)).toBeTruthy()
+
+    // 取消：不调用
+    fireEvent.click(screen.getByRole('button', { name: '取消' }))
+    expect(mocks.deleteAlbum).not.toHaveBeenCalled()
+
+    // 再次删除并确认：调用且卡片移除
+    fireEvent.click(screen.getAllByRole('button', { name: '删除' })[0])
+    fireEvent.click(await screen.findByRole('button', { name: '确认删除' }))
     expect(await vi.waitFor(() => {
       expect(mocks.deleteAlbum).toHaveBeenCalledWith(sampleAlbums[0])
+    })).toBeUndefined()
+    expect(await vi.waitFor(() => {
+      expect(screen.queryByText('旅行')).toBeNull()
     })).toBeUndefined()
   })
 })
