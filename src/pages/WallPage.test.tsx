@@ -57,6 +57,12 @@ vi.mock('@/lib/realtime', () => ({
   publishAlbumEvent: vi.fn(async () => {}),
 }))
 
+vi.mock('@/lib/exportPng', () => ({
+  exportNodeToPng: vi.fn(async () => {}),
+}))
+
+import { exportNodeToPng } from '@/lib/exportPng'
+
 vi.mock('sonner', () => ({ toast: { success: vi.fn() } }))
 
 function photo(id: string, sortOrder: number, albumId: string, createdAt = ''): PhotoWithUrl {
@@ -205,5 +211,28 @@ describe('WallPage 三视图与排序', () => {
         { id: 'p1', sort_order: 1 },
       ])
     })
+  })
+})
+
+describe('WallPage 导出 PNG（P4）', () => {
+  const PHOTOS = [photo('p1', 0, 'albumP4', '2025-10-01T08:00:00Z')]
+
+  it('Dock 含导出 PNG 按钮，3D 墙下点击触发导出', async () => {
+    await renderAlbumPage('albumP4', '相册P4', PHOTOS)
+    const button = screen.getByRole('button', { name: '导出 PNG' })
+    expect(button).toBeTruthy()
+    expect((button as HTMLButtonElement).disabled).toBe(false)
+
+    fireEvent.click(button)
+    await vi.waitFor(() => {
+      expect(exportNodeToPng).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  it('时间轴视图下导出按钮禁用', async () => {
+    await renderAlbumPage('albumP4', '相册P4', PHOTOS)
+    fireEvent.click(screen.getByRole('button', { name: '时间轴' }))
+    const button = screen.getByRole('button', { name: '导出 PNG' })
+    expect((button as HTMLButtonElement).disabled).toBe(true)
   })
 })

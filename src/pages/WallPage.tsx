@@ -4,11 +4,13 @@ import { toast } from 'sonner'
 import { PhotoWall } from '@/components/PhotoWall'
 import { ALBUM_UPDATED_EVENT } from '@/components/RealtimeListener'
 import { MasonryView } from '@/components/wall/MasonryView'
+import { Dock } from '@/components/wall/Dock'
 import { PhotoLightbox } from '@/components/wall/PhotoLightbox'
 import { SortableGridView } from '@/components/wall/SortableGridView'
 import { TimelineView } from '@/components/wall/TimelineView'
 import { UploadButton } from '@/components/wall/UploadButton'
 import type { FakePhoto } from '@/lib/fakePhotos'
+import { exportNodeToPng } from '@/lib/exportPng'
 import { deletePhoto, listPhotosWithUrls, persistSortOrder, reorderPhotos } from '@/lib/photos'
 import { publishAlbumEvent } from '@/lib/realtime'
 import { supabase } from '@/lib/supabase'
@@ -36,6 +38,7 @@ export default function WallPage() {
   const [uploadMessage, setUploadMessage] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('wall')
   const [sortMode, setSortMode] = useState(false)
+  const wallExportRef = useRef<HTMLDivElement>(null)
   const [lightbox, setLightbox] = useState<{
     photos: { id: string; url: string }[]
     index: number
@@ -132,6 +135,17 @@ export default function WallPage() {
       setUploadMessage(err instanceof Error ? err.message : '上传失败')
     } finally {
       setUploading(false)
+    }
+  }
+
+  async function handleExportWall() {
+    const node = wallExportRef.current
+    if (!node) return
+    try {
+      await exportNodeToPng(node, `locket-${album?.name ?? 'wall'}.png`)
+      toast.success('已导出 PNG')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '导出失败')
     }
   }
 
@@ -234,7 +248,9 @@ export default function WallPage() {
             这个相册还没有照片，点右上角上传吧
           </div>
         ) : (
-          <PhotoWall photos={wallItems} onDeletePhoto={(id) => void handleDeletePhoto(id)} />
+          <div ref={wallExportRef} className="h-full">
+            <PhotoWall photos={wallItems} onDeletePhoto={(id) => void handleDeletePhoto(id)} />
+          </div>
         )
       ) : (
         <div className="h-full overflow-y-auto p-4 pt-20">
@@ -264,6 +280,17 @@ export default function WallPage() {
           onClose={() => setLightbox(null)}
         />
       )}
+
+      <Dock>
+        <button
+          type="button"
+          disabled={viewMode !== 'wall'}
+          onClick={() => void handleExportWall()}
+          className="rounded-full px-3 py-1.5 text-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          导出 PNG
+        </button>
+      </Dock>
     </div>
   )
 }
