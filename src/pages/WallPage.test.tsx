@@ -207,3 +207,24 @@ describe('WallPage 三视图与排序', () => {
     })
   })
 })
+
+describe('WallPage 心形模式（P4）', () => {
+  const PHOTOS = [photo('p1', 0, 'albumHeart', '2025-10-01T08:00:00Z')]
+
+  it('点心形切换 3D 爱心，再点回到圆柱墙', async () => {
+    await renderAlbumPage('albumHeart', '相册Heart', PHOTOS)
+    expect(document.body.querySelector('[data-testid="heart-canvas"]')).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: '心形' }))
+    expect(document.body.querySelector('[data-testid="heart-canvas"]')).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: '心形' }))
+    expect(document.body.querySelector('[data-testid="heart-canvas"]')).toBeNull()
+  })
+
+  it('非 3D 墙视图下心形按钮禁用', async () => {
+    await renderAlbumPage('albumHeart', '相册Heart', PHOTOS)
+    fireEvent.click(screen.getByRole('button', { name: '时间轴' }))
+    expect((screen.getByRole('button', { name: '心形' }) as HTMLButtonElement).disabled).toBe(true)
+  })
+})

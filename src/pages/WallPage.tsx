@@ -5,6 +5,7 @@ import { PhotoWall } from '@/components/PhotoWall'
 import { ALBUM_UPDATED_EVENT } from '@/components/RealtimeListener'
 import { MasonryView } from '@/components/wall/MasonryView'
 import { Dock } from '@/components/wall/Dock'
+import { HeartCanvas } from '@/components/wall/HeartCanvas'
 import { PhotoLightbox } from '@/components/wall/PhotoLightbox'
 import { SortableGridView } from '@/components/wall/SortableGridView'
 import { TimelineView } from '@/components/wall/TimelineView'
@@ -37,6 +38,7 @@ export default function WallPage() {
   const [uploadMessage, setUploadMessage] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('wall')
   const [sortMode, setSortMode] = useState(false)
+  const [heartMode, setHeartMode] = useState(false)
   const [lightbox, setLightbox] = useState<{
     photos: { id: string; url: string }[]
     index: number
@@ -93,6 +95,7 @@ export default function WallPage() {
     albumIdRef.current = albumId
     setLightbox(null)
     setSortMode(false)
+    setHeartMode(false)
     load()
       .catch(() => undefined)
       .finally(() => setLoading(false))
@@ -236,7 +239,11 @@ export default function WallPage() {
           </div>
         ) : (
           <div className="h-full">
-            <PhotoWall photos={wallItems} onDeletePhoto={(id) => void handleDeletePhoto(id)} />
+            {heartMode ? (
+              <HeartCanvas photos={wallItems} />
+            ) : (
+              <PhotoWall photos={wallItems} onDeletePhoto={(id) => void handleDeletePhoto(id)} />
+            )}
           </div>
         )
       ) : (
@@ -271,8 +278,12 @@ export default function WallPage() {
       <Dock>
         <button
           type="button"
-          onClick={() => undefined}
-          className="rounded-full px-3 py-1.5 text-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+          aria-pressed={heartMode}
+          disabled={viewMode !== 'wall'}
+          onClick={() => setHeartMode((prev) => !prev)}
+          className={`rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 ${
+            heartMode ? 'bg-white/20 text-white' : 'text-white/80 hover:text-white'
+          }`}
         >
           心形
         </button>
