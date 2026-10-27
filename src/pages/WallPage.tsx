@@ -285,7 +285,7 @@ export default function WallPage() {
         <button
           type="button"
           aria-pressed={heartMode}
-          disabled={viewMode !== 'wall'}
+          disabled={viewMode !== 'wall' || wallItems.length === 0}
           onClick={() => setHeartMode((prev) => !prev)}
           className={`rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 ${
             heartMode ? 'bg-white/20 text-white' : 'text-white/80 hover:text-white'
@@ -296,7 +296,7 @@ export default function WallPage() {
         <button
           type="button"
           aria-pressed={autoRotate}
-          disabled={viewMode !== 'wall'}
+          disabled={viewMode !== 'wall' || wallItems.length === 0}
           onClick={() => setAutoRotate((prev) => !prev)}
           className={`rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 ${
             autoRotate ? 'bg-white/20 text-white' : 'text-white/80 hover:text-white'

@@ -252,3 +252,11 @@ describe('WallPage 自动旋转开关（P4）', () => {
     ).toBe(true)
   })
 })
+
+describe('WallPage 空相册（P4 修复）', () => {
+  it('空相册下心形与自动旋转按钮禁用', async () => {
+    await renderAlbumPage('albumEmpty', '空相册', [])
+    expect((screen.getByRole('button', { name: '心形' }) as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByRole('button', { name: '自动旋转' }) as HTMLButtonElement).disabled).toBe(true)
+  })
+})

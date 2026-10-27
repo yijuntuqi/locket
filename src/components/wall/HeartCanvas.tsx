@@ -1,7 +1,7 @@
 import { memo, useEffect, useState, type CSSProperties } from 'react'
 import { usePhotoWallRotation } from '@/hooks/usePhotoWallRotation'
 import type { FakePhoto } from '@/lib/fakePhotos'
-import { computeHeartPositions3D } from '@/lib/heartGeometry3d'
+import { computeHeartCardTransforms } from '@/lib/heartGeometry3d'
 
 interface HeartCardProps {
   photo: FakePhoto
@@ -86,7 +86,7 @@ export function HeartCanvas({
 
   const scale = scalePx ?? Math.min(window.innerWidth, window.innerHeight) / 40
   const cardWidth = Math.max(96, Math.round(scale * 12))
-  const positions = computeHeartPositions3D(photos.length)
+  const cards = computeHeartCardTransforms(photos.length)
 
   return (
     <div
@@ -105,8 +105,7 @@ export function HeartCanvas({
         }}
       >
         {photos.map((photo, i) => {
-          const p = positions[i]
-          const rotateYDeg = (Math.atan2(p.x, p.z) * 180) / Math.PI
+          const p = cards[i]
           return (
             <HeartCard
               key={photo.id}
@@ -114,7 +113,7 @@ export function HeartCanvas({
               x={Math.round(p.x * scale)}
               y={Math.round(-p.y * scale)}
               z={Math.round(p.z * scale)}
-              rotateYDeg={Math.round(rotateYDeg)}
+              rotateYDeg={Math.round(p.rotateYDeg)}
               widthPx={cardWidth}
               delayMs={i * 45}
               mounted={mounted}

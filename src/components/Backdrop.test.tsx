@@ -1,17 +1,22 @@
 // @vitest-environment jsdom
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render } from '@testing-library/react'
 import { Backdrop } from './Backdrop'
 
-beforeAll(() => {
-  vi.stubGlobal('matchMedia', (query: string) => ({
-    matches: query.includes('prefers-reduced-motion'),
-    addEventListener() {},
-    removeEventListener() {},
-  }))
+const defaultMatchMedia = (query: string) => ({
+  matches: query.includes('prefers-reduced-motion'),
+  addEventListener() {},
+  removeEventListener() {},
 })
 
-afterEach(cleanup)
+beforeEach(() => {
+  vi.stubGlobal('matchMedia', defaultMatchMedia)
+})
+
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+})
 
 describe('Backdrop 分层极光', () => {
   it('默认渲染星星层与暗角层', () => {

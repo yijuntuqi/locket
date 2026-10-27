@@ -28,7 +28,6 @@
     "is-plain-obj": "^4.1.0",
     "is-stream": "^4.0.1",
     "is-unicode-supported": "^2.1.0",
-    "jszip": "^3.10.2",
     "lucide-react": "^1.62.0",
     "npm-run-path": "^6.0.0",
     "ogl": "^1.0.11",

@@ -54,3 +54,18 @@ describe('computeHeartPositions3D', () => {
     expect(positions.some((p) => p.z < -0.5)).toBe(true)
   })
 })
+
+describe('computeHeartCardTransforms', () => {
+  it('rotateYDeg 以 tube 中心线为基准（卡片垂直 tube 表面）', async () => {
+    const { computeHeartCardTransforms } = await import('./heartGeometry3d')
+    const transforms = computeHeartCardTransforms(16, 3)
+    expect(transforms).toHaveLength(16)
+    const positions = computeHeartPositions3D(16, 3)
+    for (let i = 0; i < transforms.length; i++) {
+      const t = (i / transforms.length) * Math.PI * 2
+      const c = heartCenterline(t)
+      const expected = (Math.atan2(positions[i].x - c.x, positions[i].z) * 180) / Math.PI
+      expect(transforms[i].rotateYDeg).toBeCloseTo(expected, 5)
+    }
+  })
+})

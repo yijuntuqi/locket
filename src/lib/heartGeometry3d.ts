@@ -46,3 +46,23 @@ export function computeHeartPositions3D(
   }
   return result
 }
+
+export interface HeartCardTransform extends HeartPoint3D {
+  /** 卡片绕 Y 轴朝向角，基准为该点 tube 中心线（保证卡片垂直 tube 表面） */
+  rotateYDeg: number
+}
+
+export function computeHeartCardTransforms(
+  count: number,
+  tubeRadius = 3
+): HeartCardTransform[] {
+  const positions = computeHeartPositions3D(count, tubeRadius)
+  return positions.map((p, i) => {
+    const t = (i / count) * Math.PI * 2
+    const c = heartCenterline(t)
+    return {
+      ...p,
+      rotateYDeg: (Math.atan2(p.x - c.x, p.z) * 180) / Math.PI,
+    }
+  })
+}
