@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 
 type Mode = 'login' | 'signup'
@@ -25,6 +26,7 @@ export default function LoginPage() {
           password,
         })
         if (signInError) throw signInError
+        toast.success('登录成功')
         navigate('/', { replace: true })
       } else {
         const { data, error: signUpError } = await supabase.auth.signUp({
@@ -33,6 +35,7 @@ export default function LoginPage() {
         })
         if (signUpError) throw signUpError
         if (data.session) {
+          toast.success('登录成功')
           navigate('/', { replace: true })
         } else {
           // 后台开启 Confirm email 后走这里：留好的口子，无需改代码

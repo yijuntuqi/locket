@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { toast } from 'sonner'
 import { PhotoWall } from '@/components/PhotoWall'
+import { ALBUM_UPDATED_EVENT } from '@/components/RealtimeListener'
 import { UploadButton } from '@/components/wall/UploadButton'
 import type { FakePhoto } from '@/lib/fakePhotos'
 import { deletePhoto, listPhotosWithUrls } from '@/lib/photos'
+import { publishAlbumEvent } from '@/lib/realtime'
 import { supabase } from '@/lib/supabase'
 import type { Album, Photo } from '@/lib/types'
 import { uploadPhotos } from '@/lib/upload'
@@ -50,6 +53,15 @@ export default function WallPage() {
       .finally(() => setLoading(false))
   }, [load])
 
+  useEffect(() => {
+    if (!albumId) return
+    const onUpdated = (e: Event) => {
+      if ((e as CustomEvent<string>).detail === albumId) void load()
+    }
+    window.addEventListener(ALBUM_UPDATED_EVENT, onUpdated)
+    return () => window.removeEventListener(ALBUM_UPDATED_EVENT, onUpdated)
+  }, [albumId, load])
+
   async function handleUpload(files: File[]) {
     if (!album) return
     setUploading(true)
@@ -64,8 +76,14 @@ export default function WallPage() {
         )
       } else {
         setUploadMessage(`上传成功 ${results.length} 张`)
+        toast.success(`上传成功 ${results.length} 张`)
       }
       await load()
+      void publishAlbumEvent(album.owner_id, {
+        type: 'album-updated',
+        albumId: album.id,
+        albumName: album.name,
+      }).catch(() => undefined)
     } catch (err) {
       setUploadMessage(err instanceof Error ? err.message : '上传失败')
     } finally {

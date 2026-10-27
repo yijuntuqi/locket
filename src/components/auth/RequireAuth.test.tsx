@@ -16,6 +16,7 @@ vi.mock('@/lib/supabase', () => ({
     auth: {
       getSession: mockGetSession,
       onAuthStateChange: mockOnAuthStateChange,
+      getUser: vi.fn(async () => ({ data: { user: null }, error: null })),
     },
   },
 }))

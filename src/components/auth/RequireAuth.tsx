@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
+import { RealtimeListener } from '@/components/RealtimeListener'
 import { supabase } from '@/lib/supabase'
 
 export function RequireAuth({ children }: { children: ReactNode }) {
@@ -34,5 +35,10 @@ export function RequireAuth({ children }: { children: ReactNode }) {
     )
   }
   if (!session) return <Navigate to="/login" replace />
-  return <>{children}</>
+  return (
+    <>
+      {children}
+      <RealtimeListener />
+    </>
+  )
 }

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { toast } from 'sonner'
 import { AlbumDialog } from '@/components/albums/AlbumDialog'
+import { ALBUMS_CHANGED_EVENT } from '@/components/RealtimeListener'
 import {
   createAlbum,
   deleteAlbum,
@@ -8,6 +10,8 @@ import {
   renameAlbum,
   ValidationError,
 } from '@/lib/albums'
+import { publishAlbumEvent } from '@/lib/realtime'
+import { supabase } from '@/lib/supabase'
 import type { Album } from '@/lib/types'
 
 type DialogState =
@@ -36,13 +40,30 @@ export default function AlbumsPage() {
     refresh().finally(() => setLoading(false))
   }, [refresh])
 
+  useEffect(() => {
+    const onChanged = () => void refresh()
+    window.addEventListener(ALBUMS_CHANGED_EVENT, onChanged)
+    return () => window.removeEventListener(ALBUMS_CHANGED_EVENT, onChanged)
+  }, [refresh])
+
   async function handleSubmit(name: string) {
     if (!dialog) return
     setDialogError(null)
     setPending(true)
     try {
       if (dialog.mode === 'create') {
-        await createAlbum(name)
+        const album = await createAlbum(name)
+        toast.success(`相册「${album.name}」建好啦`)
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+        if (user) {
+          void publishAlbumEvent(user.id, {
+            type: 'album-created',
+            albumId: album.id,
+            albumName: album.name,
+          }).catch(() => undefined)
+        }
       } else {
         await renameAlbum(dialog.album.id, name)
       }
