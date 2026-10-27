@@ -8,7 +8,7 @@ interface PhotoWallProps {
   photos: FakePhoto[]
   cardWidthPx?: number
   gapPx?: number
-  /** 俯视倾斜角（度），让圆柱呈现从斜上方往下看的纵深 */
+  /** 俯视倾斜角（度），负值 = 从斜上方往下看（CSS rotateX 正值是仰视） */
   tiltDeg?: number
   onDeletePhoto?: (id: string) => void
 }
@@ -17,7 +17,7 @@ export function PhotoWall({
   photos,
   cardWidthPx = 240,
   gapPx = 24,
-  tiltDeg = 18,
+  tiltDeg = -18,
   onDeletePhoto,
 }: PhotoWallProps) {
   const { angleDeg, isDragging, handlers } = usePhotoWallRotation()

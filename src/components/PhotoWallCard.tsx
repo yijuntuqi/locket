@@ -43,14 +43,19 @@ export const PhotoWallCard = memo(function PhotoWallCard({
             : undefined
         }
       />
-      <div
+      <img
         data-testid="card-back"
+        src={photo.src}
+        alt=""
         aria-hidden
-        className="absolute inset-0 flex items-center justify-center rounded-xl border border-white/10 bg-gradient-to-br from-zinc-800 to-zinc-950 shadow-lg"
-        style={{ transform: 'rotateY(180deg)', backfaceVisibility: 'hidden' }}
-      >
-        <span className="text-sm tracking-wide text-white/40">{photo.caption}</span>
-      </div>
+        draggable={false}
+        className="absolute inset-0 h-full w-full select-none rounded-xl object-cover shadow-lg"
+        style={{
+          transform: 'rotateY(180deg)',
+          backfaceVisibility: 'hidden',
+          opacity: 0.6,
+        }}
+      />
       {handleDelete && (
         <button
           type="button"

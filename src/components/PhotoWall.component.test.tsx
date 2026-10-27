@@ -118,16 +118,23 @@ describe('删除交互守卫', () => {
 })
 
 describe('俯视倾斜与背板', () => {
-  it('场景容器带固定 X 轴俯视倾斜', () => {
+  it('场景容器带固定 X 轴俯视倾斜（负角度 = 从斜上方往下看）', () => {
     const { container } = render(<PhotoWall photos={[makePhoto(0)]} />)
     const surface = container.querySelector('[data-testid="wall-drag-surface"]')!
-    expect((surface as HTMLElement).style.transform).toMatch(/rotateX\(18deg\)/)
+    expect((surface as HTMLElement).style.transform).toMatch(/rotateX\(-18deg\)/)
   })
 
-  it('每张卡片渲染可看见的背板面', () => {
+  it('每张卡片的背面是半透明镜像照片层（透出后面的照片）', () => {
     const { container } = render(
       <PhotoWall photos={[makePhoto(0), makePhoto(1), makePhoto(2)]} />
     )
-    expect(container.querySelectorAll('[data-testid="card-back"]').length).toBe(3)
+    const backs = container.querySelectorAll('[data-testid="card-back"]')
+    expect(backs.length).toBe(3)
+    for (const back of backs) {
+      const el = back as HTMLElement
+      expect(el.tagName).toBe('IMG')
+      expect(el.style.opacity).not.toBe('')
+      expect(Number(el.style.opacity)).toBeLessThan(1)
+    }
   })
 })
