@@ -91,6 +91,7 @@ describe('deleteAlbum', () => {
       owner_id: 'u1',
       name: '日常',
       allow_collab_upload: false,
+      wall_layout: 'cylinder',
       created_at: '',
     })
     expect(mockStorageRemove).toHaveBeenCalledWith(['u1/a1/p1.webp'])
