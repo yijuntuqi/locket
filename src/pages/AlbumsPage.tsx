@@ -1,8 +1,153 @@
+import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { AlbumDialog } from '@/components/albums/AlbumDialog'
+import {
+  createAlbum,
+  deleteAlbum,
+  listAlbums,
+  renameAlbum,
+  ValidationError,
+} from '@/lib/albums'
+import type { Album } from '@/lib/types'
+
+type DialogState =
+  | { mode: 'create' }
+  | { mode: 'rename'; album: Album }
+  | null
+
 export default function AlbumsPage() {
+  const [albums, setAlbums] = useState<Album[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [dialog, setDialog] = useState<DialogState>(null)
+  const [dialogError, setDialogError] = useState<string | null>(null)
+  const [pending, setPending] = useState(false)
+
+  const refresh = useCallback(async () => {
+    try {
+      setAlbums(await listAlbums())
+      setLoadError(null)
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : '相册加载失败')
+    }
+  }, [])
+
+  useEffect(() => {
+    refresh().finally(() => setLoading(false))
+  }, [refresh])
+
+  async function handleSubmit(name: string) {
+    if (!dialog) return
+    setDialogError(null)
+    setPending(true)
+    try {
+      if (dialog.mode === 'create') {
+        await createAlbum(name)
+      } else {
+        await renameAlbum(dialog.album.id, name)
+      }
+      setDialog(null)
+      await refresh()
+    } catch (err) {
+      setDialogError(
+        err instanceof ValidationError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : '保存失败，请重试'
+      )
+    } finally {
+      setPending(false)
+    }
+  }
+
+  async function handleDelete(album: Album) {
+    setPending(true)
+    try {
+      await deleteAlbum(album)
+      setAlbums((prev) => prev.filter((a) => a.id !== album.id))
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : '删除失败，请重试')
+    } finally {
+      setPending(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-full items-center justify-center text-white/60">
+        加载中…
+      </div>
+    )
+  }
+
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-2">
-      <h1 className="text-2xl font-semibold text-white">我的相册</h1>
-      <p className="text-white/50">相册管理开发中（Task 5 接入）</p>
+    <div className="h-full overflow-y-auto">
+      <div className="mx-auto max-w-3xl px-6 py-10">
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-semibold text-white">我的相册</h1>
+          <button
+            onClick={() => {
+              setDialogError(null)
+              setDialog({ mode: 'create' })
+            }}
+            className="rounded-md bg-white px-3 py-2 text-sm font-medium text-slate-900"
+          >
+            新建相册
+          </button>
+        </div>
+
+        {loadError && <p className="mb-4 text-sm text-red-400">{loadError}</p>}
+
+        {albums.length === 0 && !loadError ? (
+          <p className="text-white/50">还没有相册，点右上角新建一个吧</p>
+        ) : (
+          <ul className="grid grid-cols-2 gap-4 md:grid-cols-3">
+            {albums.map((album) => (
+              <li
+                key={album.id}
+                className="rounded-xl border border-white/10 bg-white/5 p-4"
+              >
+                <Link
+                  to={`/album/${album.id}`}
+                  className="block text-lg font-medium text-white hover:underline"
+                >
+                  {album.name}
+                </Link>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() => {
+                      setDialogError(null)
+                      setDialog({ mode: 'rename', album })
+                    }}
+                    className="text-sm text-white/60 hover:text-white"
+                  >
+                    重命名
+                  </button>
+                  <button
+                    onClick={() => void handleDelete(album)}
+                    disabled={pending}
+                    className="text-sm text-red-400/80 hover:text-red-300 disabled:opacity-50"
+                  >
+                    删除
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {dialog && (
+        <AlbumDialog
+          title={dialog.mode === 'create' ? '新建相册' : '重命名相册'}
+          initialName={dialog.mode === 'rename' ? dialog.album.name : ''}
+          pending={pending}
+          error={dialogError}
+          onSubmit={(name) => void handleSubmit(name)}
+          onClose={() => setDialog(null)}
+        />
+      )}
     </div>
   )
 }
