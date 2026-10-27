@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { PhotoWall } from '@/components/PhotoWall'
 import { ALBUM_UPDATED_EVENT } from '@/components/RealtimeListener'
 import { Dock } from '@/components/wall/Dock'
+import { EdgeReveal } from '@/components/wall/EdgeReveal'
 import { HeartCanvas } from '@/components/wall/HeartCanvas'
 import { UploadButton } from '@/components/wall/UploadButton'
 import type { FakePhoto } from '@/lib/fakePhotos'
@@ -140,20 +141,22 @@ export default function WallPage() {
 
   return (
     <div className="relative h-full">
-      <div className="pointer-events-none absolute left-0 right-0 top-0 z-10 flex items-center justify-between p-4">
-        <Link
-          to="/"
-          className={`pointer-events-auto px-3 py-1.5 text-sm text-white transition-colors hover:bg-white/10 ${glassPill}`}
-        >
-          ← 返回
-        </Link>
-        <div className="pointer-events-auto flex items-center gap-3">
-          <span className={`px-3 py-1.5 text-sm text-white ${glassPill}`}>
-            {album.name}
-          </span>
-          <UploadButton pending={uploading} onFiles={(fs) => void handleUpload(fs)} />
+      <EdgeReveal edge="top">
+        <div className="flex items-center justify-between p-4">
+          <Link
+            to="/"
+            className={`px-3 py-1.5 text-sm text-white transition-colors hover:bg-white/10 ${glassPill}`}
+          >
+            ← 返回
+          </Link>
+          <div className="flex items-center gap-3">
+            <span className={`px-3 py-1.5 text-sm text-white ${glassPill}`}>
+              {album.name}
+            </span>
+            <UploadButton pending={uploading} onFiles={(fs) => void handleUpload(fs)} />
+          </div>
         </div>
-      </div>
+      </EdgeReveal>
 
       {uploadMessage && (
         <div className={`absolute bottom-4 left-1/2 z-10 -translate-x-1/2 px-4 py-2 text-sm text-white ${glassPill}`}>
@@ -179,30 +182,34 @@ export default function WallPage() {
         </div>
       )}
 
-      <Dock>
-        <button
-          type="button"
-          aria-pressed={heartMode}
-          disabled={wallItems.length === 0}
-          onClick={() => setHeartMode((prev) => !prev)}
-          className={`rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 ${
-            heartMode ? 'bg-white/20 text-white' : 'text-white/80 hover:text-white'
-          }`}
-        >
-          心形
-        </button>
-        <button
-          type="button"
-          aria-pressed={autoRotate}
-          disabled={wallItems.length === 0}
-          onClick={() => setAutoRotate((prev) => !prev)}
-          className={`rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 ${
-            autoRotate ? 'bg-white/20 text-white' : 'text-white/80 hover:text-white'
-          }`}
-        >
-          自动旋转
-        </button>
-      </Dock>
+      <EdgeReveal edge="bottom">
+        <div className="flex justify-center p-4">
+          <Dock>
+            <button
+              type="button"
+              aria-pressed={heartMode}
+              disabled={wallItems.length === 0}
+              onClick={() => setHeartMode((prev) => !prev)}
+              className={`rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 ${
+                heartMode ? 'bg-white/20 text-white' : 'text-white/80 hover:text-white'
+              }`}
+            >
+              心形
+            </button>
+            <button
+              type="button"
+              aria-pressed={autoRotate}
+              disabled={wallItems.length === 0}
+              onClick={() => setAutoRotate((prev) => !prev)}
+              className={`rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 ${
+                autoRotate ? 'bg-white/20 text-white' : 'text-white/80 hover:text-white'
+              }`}
+            >
+              自动旋转
+            </button>
+          </Dock>
+        </div>
+      </EdgeReveal>
     </div>
   )
 }

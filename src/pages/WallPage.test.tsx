@@ -190,3 +190,21 @@ describe('WallPage 空相册（P4 修复）', () => {
     expect((screen.getByRole('button', { name: '自动旋转' }) as HTMLButtonElement).disabled).toBe(true)
   })
 })
+
+describe('WallPage 隐藏式控制层（P5）', () => {
+  const PHOTOS = [photo('p1', 0, 'albumReveal', '2025-10-01T08:00:00Z')]
+
+  it('顶栏与 Dock 默认隐藏，指针进入触发条浮现', async () => {
+    await renderAlbumPage('albumReveal', '相册Reveal', PHOTOS)
+
+    const topPanel = screen.getByRole('link', { name: '← 返回' }).parentElement!
+      .parentElement as HTMLElement
+    expect(topPanel.className).toContain('opacity-0')
+
+    const strips = screen.getAllByRole('button', { name: '显示控制栏' })
+    expect(strips.length).toBe(2)
+
+    fireEvent.pointerEnter(strips[0])
+    expect(topPanel.className).toContain('opacity-100')
+  })
+})

@@ -4,15 +4,15 @@ import { render } from '@testing-library/react'
 import { Dock } from './Dock'
 
 describe('Dock', () => {
-  it('渲染 children，容器为底部居中浮动栏', () => {
+  it('渲染 children，容器为毛玻璃胶囊', () => {
     const { container, getByRole } = render(
       <Dock>
-        <button type="button">导出 PNG</button>
+        <button type="button">心形</button>
       </Dock>
     )
-    expect(getByRole('button', { name: '导出 PNG' })).toBeTruthy()
+    expect(getByRole('button', { name: '心形' })).toBeTruthy()
     const dock = container.firstElementChild as HTMLElement
-    expect(dock.className).toContain('fixed')
-    expect(dock.className).toContain('bottom-5')
+    expect(dock.className).toContain('rounded-full')
+    expect(dock.className).toContain('backdrop-blur')
   })
 })
