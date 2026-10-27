@@ -3,6 +3,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import WallPage from './WallPage'
+import { setAlbumLayout } from '@/lib/albums'
 import type { PhotoWithUrl } from '@/lib/types'
 
 interface Deferred<T> {
@@ -54,6 +55,14 @@ vi.mock('@/lib/photos', async (importOriginal) => {
 vi.mock('@/lib/realtime', () => ({
   publishAlbumEvent: vi.fn(async () => {}),
 }))
+
+vi.mock('@/lib/albums', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/albums')>()
+  return {
+    ...actual,
+    setAlbumLayout: vi.fn(async () => {}),
+  }
+})
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn() } }))
 
@@ -202,5 +211,45 @@ describe('WallPage 场景氛围（P5）', () => {
     await renderAlbumPage('albumScene', '相册Scene', [photo('p1', 0, 'albumScene', '2025-10-01T08:00:00Z')])
     expect(document.body.querySelector('[data-testid="scene-light"]')).toBeTruthy()
     expect(document.body.querySelectorAll('[data-testid="dust-mote"]').length).toBe(24)
+  })
+})
+
+describe('WallPage 布局持久化（P6）', () => {
+  const PHOTOS = [photo('p1', 0, 'albumLayout', '2025-10-01T08:00:00Z')]
+
+  it('点选布局调用 setAlbumLayout 并更新当前显示', async () => {
+    await renderAlbumPage('albumLayout', '相册Layout', PHOTOS)
+    fireEvent.click(screen.getByRole('button', { name: '布局：圆柱墙' }))
+    fireEvent.click(screen.getByRole('button', { name: '布局：球形展厅' }))
+
+    await vi.waitFor(() => {
+      expect(setAlbumLayout).toHaveBeenCalledWith('albumLayout', 'sphere')
+    })
+    expect(screen.getByRole('button', { name: '布局：球形展厅' })).toBeTruthy()
+  })
+
+  it('相册自带 wall_layout 时控制条显示该布局', async () => {
+    const router = createMemoryRouter(
+      [{ path: '/album/:albumId', element: <WallPage /> }],
+      { initialEntries: ['/album/albumLayout2'] }
+    )
+    render(<RouterProvider router={router} />)
+    albumDef.albumLayout2.resolve({
+      data: {
+        id: 'albumLayout2',
+        owner_id: 'u1',
+        name: '相册Layout2',
+        allow_collab_upload: false,
+        wall_layout: 'spiral',
+        created_at: '',
+      },
+      error: null,
+    })
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+    })
+    photoDef.albumLayout2.resolve(PHOTOS.map((p) => ({ ...p, album_id: 'albumLayout2' })))
+    await screen.findByText('相册Layout2')
+    expect(screen.getByRole('button', { name: '布局：螺旋隧道' })).toBeTruthy()
   })
 })

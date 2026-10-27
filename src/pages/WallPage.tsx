@@ -9,7 +9,8 @@ import { DustMotes, SceneLight } from '@/components/wall/SceneAtmosphere'
 import { UploadButton } from '@/components/wall/UploadButton'
 import type { FakePhoto } from '@/lib/fakePhotos'
 import { glassPill } from '@/lib/glass'
-import { DEFAULT_LAYOUT, type WallLayout } from '@/lib/layouts'
+import { setAlbumLayout } from '@/lib/albums'
+import { DEFAULT_LAYOUT, isWallLayout, type WallLayout } from '@/lib/layouts'
 import { deletePhoto, listPhotosWithUrls } from '@/lib/photos'
 import { publishAlbumEvent } from '@/lib/realtime'
 import { supabase } from '@/lib/supabase'
@@ -45,6 +46,8 @@ export default function WallPage() {
       if (isStale()) return
       if (albumError) throw albumError
       setAlbum(albumData as Album)
+      const loadedLayout = (albumData as Album).wall_layout
+      setLayout(isWallLayout(loadedLayout) ? loadedLayout : DEFAULT_LAYOUT)
 
       const photoList = await listPhotosWithUrls(id)
       if (isStale()) return
@@ -120,6 +123,16 @@ export default function WallPage() {
     }
   }
 
+  async function handleLayoutChange(next: WallLayout) {
+    if (!album) return
+    setLayout(next)
+    try {
+      await setAlbumLayout(album.id, next)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '布局保存失败')
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center text-white/60">
@@ -182,7 +195,7 @@ export default function WallPage() {
 
       <ControlsBar
         currentLayout={layout}
-        onLayoutChange={setLayout}
+        onLayoutChange={(next) => void handleLayoutChange(next)}
         autoRotate={autoRotate}
         onToggleAutoRotate={() => setAutoRotate((prev) => !prev)}
         disabled={wallItems.length === 0}

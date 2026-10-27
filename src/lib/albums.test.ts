@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createAlbum, deleteAlbum, validateAlbumName, ValidationError } from './albums'
+import {
+  createAlbum,
+  deleteAlbum,
+  setAlbumLayout,
+  validateAlbumName,
+  ValidationError,
+} from './albums'
 
 const calls: string[] = []
 
@@ -18,6 +24,10 @@ const mockStorageRemove = vi.fn(async (paths: string[]) => {
   calls.push('storage-remove:' + paths.join(','))
   return { data: [], error: null }
 })
+const mockUpdateAlbum = vi.fn((patch: unknown) => {
+  calls.push('update-album:' + JSON.stringify(patch))
+  return { eq: async () => ({ error: null }) }
+})
 const mockDeleteAlbum = vi.fn(() => ({
   eq: async () => {
     calls.push('delete-album')
@@ -29,7 +39,8 @@ vi.mock('@/lib/supabase', () => ({
   supabase: {
     auth: { getUser: (...a: unknown[]) => mockGetUser(...a) },
     from: (table: string) => {
-      if (table === 'albums') return { insert: mockInsert, delete: mockDeleteAlbum }
+      if (table === 'albums')
+        return { insert: mockInsert, delete: mockDeleteAlbum, update: mockUpdateAlbum }
       if (table === 'photos') return { select: mockSelectPhotos }
       throw new Error('unexpected table ' + table)
     },
@@ -86,5 +97,21 @@ describe('deleteAlbum', () => {
     expect(calls.indexOf('storage-remove:u1/a1/p1.webp')).toBeLessThan(
       calls.indexOf('delete-album')
     )
+  })
+})
+
+describe('setAlbumLayout', () => {
+  beforeEach(() => {
+    calls.length = 0
+  })
+
+  it('合法布局写入 wall_layout', async () => {
+    await setAlbumLayout('a1', 'sphere')
+    expect(calls).toContain('update-album:{"wall_layout":"sphere"}')
+  })
+
+  it('非法布局抛 ValidationError 且不写库', async () => {
+    await expect(setAlbumLayout('a1', 'hack' as never)).rejects.toThrow(ValidationError)
+    expect(calls.filter((c) => c.startsWith('update-album'))).toHaveLength(0)
   })
 })

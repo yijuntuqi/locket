@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { isWallLayout, type WallLayout } from '@/lib/layouts'
 import type { Album } from '@/lib/types'
 
 export class ValidationError extends Error {}
@@ -39,6 +40,15 @@ export async function renameAlbum(id: string, name: string): Promise<void> {
   const { error } = await supabase
     .from('albums')
     .update({ name: trimmed })
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function setAlbumLayout(id: string, layout: WallLayout): Promise<void> {
+  if (!isWallLayout(layout)) throw new ValidationError('未知布局')
+  const { error } = await supabase
+    .from('albums')
+    .update({ wall_layout: layout })
     .eq('id', id)
   if (error) throw error
 }

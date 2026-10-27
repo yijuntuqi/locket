@@ -1,8 +1,11 @@
+import type { WallLayout } from './layouts'
+
 export interface Album {
   id: string
   owner_id: string
   name: string
   allow_collab_upload: boolean
+  wall_layout: WallLayout
   created_at: string
 }
 
