@@ -24,7 +24,6 @@
     "execa": "^10.2.1",
     "figures": "^6.1.0",
     "get-stream": "^9.0.1",
-    "html-to-image": "^1.11.13",
     "human-signals": "^8.0.1",
     "is-plain-obj": "^4.1.0",
     "is-stream": "^4.0.1",

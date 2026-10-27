@@ -57,11 +57,11 @@ vi.mock('@/lib/realtime', () => ({
   publishAlbumEvent: vi.fn(async () => {}),
 }))
 
-vi.mock('@/lib/exportPng', () => ({
-  exportNodeToPng: vi.fn(async () => {}),
+vi.mock('@/lib/exportWallCanvas', () => ({
+  exportWallPng: vi.fn(async () => {}),
 }))
 
-import { exportNodeToPng } from '@/lib/exportPng'
+import { exportWallPng } from '@/lib/exportWallCanvas'
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn() } }))
 
@@ -225,7 +225,7 @@ describe('WallPage 导出 PNG（P4）', () => {
 
     fireEvent.click(button)
     await vi.waitFor(() => {
-      expect(exportNodeToPng).toHaveBeenCalledTimes(1)
+      expect(exportWallPng).toHaveBeenCalledTimes(1)
     })
   })
 

@@ -10,6 +10,8 @@ interface PhotoWallProps {
   gapPx?: number
   /** 俯视倾斜角（度），负值 = 从斜上方往下看（CSS rotateX 正值是仰视） */
   tiltDeg?: number
+  /** 每帧写入当前旋转角度（导出 Canvas 重绘用） */
+  angleRef?: { current: number }
   onDeletePhoto?: (id: string) => void
 }
 
@@ -18,9 +20,10 @@ export function PhotoWall({
   cardWidthPx = 240,
   gapPx = 24,
   tiltDeg = -18,
+  angleRef,
   onDeletePhoto,
 }: PhotoWallProps) {
-  const { angleDeg, isDragging, handlers } = usePhotoWallRotation()
+  const { angleDeg, isDragging, handlers } = usePhotoWallRotation({ externalAngleRef: angleRef })
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState(0)
 

@@ -10,7 +10,7 @@ import { SortableGridView } from '@/components/wall/SortableGridView'
 import { TimelineView } from '@/components/wall/TimelineView'
 import { UploadButton } from '@/components/wall/UploadButton'
 import type { FakePhoto } from '@/lib/fakePhotos'
-import { exportNodeToPng } from '@/lib/exportPng'
+import { exportWallPng } from '@/lib/exportWallCanvas'
 import { deletePhoto, listPhotosWithUrls, persistSortOrder, reorderPhotos } from '@/lib/photos'
 import { publishAlbumEvent } from '@/lib/realtime'
 import { supabase } from '@/lib/supabase'
@@ -38,7 +38,7 @@ export default function WallPage() {
   const [uploadMessage, setUploadMessage] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('wall')
   const [sortMode, setSortMode] = useState(false)
-  const wallExportRef = useRef<HTMLDivElement>(null)
+  const angleRef = useRef(0)
   const [lightbox, setLightbox] = useState<{
     photos: { id: string; url: string }[]
     index: number
@@ -139,10 +139,13 @@ export default function WallPage() {
   }
 
   async function handleExportWall() {
-    const node = wallExportRef.current
-    if (!node) return
+    if (!album) return
     try {
-      await exportNodeToPng(node, `locket-${album?.name ?? 'wall'}.png`)
+      await exportWallPng(
+        wallItems.map((p) => ({ id: p.id, url: p.src })),
+        angleRef.current,
+        `locket-${album.name}.png`
+      )
       toast.success('已导出 PNG')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '导出失败')
@@ -248,8 +251,12 @@ export default function WallPage() {
             这个相册还没有照片，点右上角上传吧
           </div>
         ) : (
-          <div ref={wallExportRef} className="h-full">
-            <PhotoWall photos={wallItems} onDeletePhoto={(id) => void handleDeletePhoto(id)} />
+          <div className="h-full">
+            <PhotoWall
+              photos={wallItems}
+              angleRef={angleRef}
+              onDeletePhoto={(id) => void handleDeletePhoto(id)}
+            />
           </div>
         )
       ) : (
