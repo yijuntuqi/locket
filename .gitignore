@@ -29,3 +29,7 @@ dist-ssr
 
 # Superpowers workspace
 .superpowers/
+
+# 环境变量模板允许入库
+!.env.example
+!.env.sample
