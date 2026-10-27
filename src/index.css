@@ -125,7 +125,18 @@
 
 @media (prefers-reduced-motion: reduce) {
   [data-testid='card-sheen'],
-  [data-testid='dust-mote'] {
+  [data-testid='dust-mote'],
+  [data-testid='scatter-card'] {
     animation: none !important;
+  }
+}
+
+@keyframes float-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(6px, -12px, 0) rotate(1.2deg);
   }
 }

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { PhotoWall } from '@/components/PhotoWall'
 import { ALBUM_UPDATED_EVENT } from '@/components/RealtimeListener'
 import { ControlsBar } from '@/components/wall/ControlsBar'
+import { WallScene } from '@/components/wall/WallScene'
 import { EdgeReveal } from '@/components/wall/EdgeReveal'
 import { DustMotes, SceneLight } from '@/components/wall/SceneAtmosphere'
 import { UploadButton } from '@/components/wall/UploadButton'
@@ -185,7 +185,8 @@ export default function WallPage() {
         </div>
       ) : (
         <div className="h-full">
-          <PhotoWall
+          <WallScene
+            layout={layout}
             photos={wallItems}
             autoRotateDegPerSec={autoRotate ? 6 : 0}
             onDeletePhoto={(id) => void handleDeletePhoto(id)}
