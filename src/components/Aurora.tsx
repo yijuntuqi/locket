@@ -507,7 +507,9 @@ const Aurora = ({
       gl.deleteProgram(program.program);
       gl.deleteBuffer(buffer);
       gl.deleteVertexArray(vao);
-      gl.getExtension('WEBGL_lose_context')?.loseContext();
+      // 不调用 loseContext()：React StrictMode 双挂载会在同一 canvas 节点上
+      // 复用已被置为 lost 的上下文，导致第二次挂载永远渲染空白。
+      // 监听器、Observer 与 GL 对象均已显式释放，canvas 随组件丢弃即可。
     };
   }, []);
 

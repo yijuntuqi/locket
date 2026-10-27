@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react'
+import { memo, type CSSProperties } from 'react'
 import type { FakePhoto } from '@/lib/fakePhotos'
 
 interface PhotoWallCardProps {
@@ -8,7 +8,12 @@ interface PhotoWallCardProps {
   widthPx: number
 }
 
-export function PhotoWallCard({ photo, angleDeg, radiusPx, widthPx }: PhotoWallCardProps) {
+export const PhotoWallCard = memo(function PhotoWallCard({
+  photo,
+  angleDeg,
+  radiusPx,
+  widthPx,
+}: PhotoWallCardProps) {
   const style: CSSProperties = {
     width: widthPx,
     aspectRatio: '3 / 4',
@@ -25,4 +30,4 @@ export function PhotoWallCard({ photo, angleDeg, radiusPx, widthPx }: PhotoWallC
       style={style}
     />
   )
-}
+})

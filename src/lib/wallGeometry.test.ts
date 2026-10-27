@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeRadius, computePlacements } from './wallGeometry'
+import { computeRadius, computePlacements, computeResponsiveScale } from './wallGeometry'
 
 describe('computeRadius', () => {
   it('张数多时按周长公式计算', () => {
@@ -19,5 +19,18 @@ describe('computePlacements', () => {
   })
   it('0 张返回空数组', () => {
     expect(computePlacements(0, 240, 24)).toEqual([])
+  })
+})
+
+describe('computeResponsiveScale', () => {
+  it('容器足够宽时返回 1（不缩放）', () => {
+    // 需要宽度 = 2*840 + 240 = 1920，容器 2000 → 1
+    expect(computeResponsiveScale(2000, 840, 240)).toBe(1)
+  })
+  it('容器变窄时按需要的宽度等比缩小', () => {
+    expect(computeResponsiveScale(960, 840, 240)).toBeCloseTo(0.5, 5)
+  })
+  it('过窄时收在下限 0.35，卡片不会缩到不可读', () => {
+    expect(computeResponsiveScale(100, 840, 240)).toBe(0.35)
   })
 })

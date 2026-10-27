@@ -22,3 +22,15 @@ export function computePlacements(
     radiusPx,
   }))
 }
+
+const MIN_SCALE = 0.35
+
+export function computeResponsiveScale(
+  containerWidthPx: number,
+  radiusPx: number,
+  cardWidthPx: number
+): number {
+  const neededPx = 2 * radiusPx + cardWidthPx
+  if (neededPx <= 0) return 1
+  return Math.max(MIN_SCALE, Math.min(1, containerWidthPx / neededPx))
+}
