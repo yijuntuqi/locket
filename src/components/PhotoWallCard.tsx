@@ -1,4 +1,5 @@
 import { memo, type CSSProperties } from 'react'
+import { CardFaces } from '@/components/wall/CardFaces'
 import type { FakePhoto } from '@/lib/fakePhotos'
 
 interface PhotoWallCardProps {
@@ -6,6 +7,12 @@ interface PhotoWallCardProps {
   angleDeg: number
   radiusPx: number
   widthPx: number
+  /** 当前被 hover 聚焦（浮出） */
+  focused: boolean
+  /** 场景中存在聚焦卡片（其余进入景深） */
+  anyFocused: boolean
+  onHoverChange: (id: string, active: boolean) => void
+  sheenDelayMs: number
   onDelete?: (id: string) => void
 }
 
@@ -14,6 +21,10 @@ export const PhotoWallCard = memo(function PhotoWallCard({
   angleDeg,
   radiusPx,
   widthPx,
+  focused,
+  anyFocused,
+  onHoverChange,
+  sheenDelayMs,
   onDelete,
 }: PhotoWallCardProps) {
   const style: CSSProperties = {
@@ -21,20 +32,28 @@ export const PhotoWallCard = memo(function PhotoWallCard({
     aspectRatio: '3 / 4',
     willChange: 'transform',
     transformStyle: 'preserve-3d',
-    transform: `translate(-50%, -50%) rotateY(${angleDeg}deg) translateZ(${radiusPx}px)`,
+    transform: `translate(-50%, -50%) rotateY(${angleDeg}deg) translateZ(${radiusPx}px)${
+      focused ? ' translateZ(48px)' : ''
+    }`,
+    transition: 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)',
   }
   const handleDelete = onDelete
     ? () => onDelete(photo.id)
     : undefined
   return (
-    <div className="group absolute left-1/2 top-1/2" style={style}>
-      <img
-        src={photo.src}
-        alt={photo.caption}
-        draggable={false}
-        className="absolute inset-0 h-full w-full select-none rounded-xl object-cover shadow-lg"
-        style={{ backfaceVisibility: 'hidden' }}
-        onContextMenu={
+    <div
+      className="group absolute left-1/2 top-1/2"
+      style={style}
+      onPointerEnter={(e) => {
+        if (e.buttons === 0) onHoverChange(photo.id, true)
+      }}
+      onPointerLeave={() => onHoverChange(photo.id, false)}
+    >
+      <CardFaces
+        photo={photo}
+        dimmed={anyFocused && !focused}
+        sheenDelayMs={sheenDelayMs}
+        onFrontContextMenu={
           handleDelete
             ? (e) => {
                 e.preventDefault()
@@ -42,19 +61,6 @@ export const PhotoWallCard = memo(function PhotoWallCard({
               }
             : undefined
         }
-      />
-      <img
-        data-testid="card-back"
-        src={photo.src}
-        alt=""
-        aria-hidden
-        draggable={false}
-        className="absolute inset-0 h-full w-full select-none rounded-xl object-cover shadow-lg"
-        style={{
-          transform: 'rotateY(180deg)',
-          backfaceVisibility: 'hidden',
-          opacity: 0.6,
-        }}
       />
       {handleDelete && (
         <button

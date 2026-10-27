@@ -6,6 +6,7 @@ import { ALBUM_UPDATED_EVENT } from '@/components/RealtimeListener'
 import { Dock } from '@/components/wall/Dock'
 import { EdgeReveal } from '@/components/wall/EdgeReveal'
 import { HeartCanvas } from '@/components/wall/HeartCanvas'
+import { DustMotes, SceneLight } from '@/components/wall/SceneAtmosphere'
 import { UploadButton } from '@/components/wall/UploadButton'
 import type { FakePhoto } from '@/lib/fakePhotos'
 import { glassPill } from '@/lib/glass'
@@ -141,6 +142,8 @@ export default function WallPage() {
 
   return (
     <div className="relative h-full">
+      <SceneLight />
+      <DustMotes />
       <EdgeReveal edge="top">
         <div className="flex items-center justify-between p-4">
           <Link

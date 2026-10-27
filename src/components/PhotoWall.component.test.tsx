@@ -128,11 +128,10 @@ describe('俯视倾斜与背板', () => {
     const { container } = render(
       <PhotoWall photos={[makePhoto(0), makePhoto(1), makePhoto(2)]} />
     )
-    const backs = container.querySelectorAll('[data-testid="card-back"]')
+    const backs = container.querySelectorAll('img[aria-hidden="true"]')
     expect(backs.length).toBe(3)
     for (const back of backs) {
       const el = back as HTMLElement
-      expect(el.tagName).toBe('IMG')
       expect(el.style.opacity).not.toBe('')
       expect(Number(el.style.opacity)).toBeLessThan(1)
     }
@@ -145,5 +144,38 @@ describe('自动旋转开关', () => {
     await new Promise((r) => setTimeout(r, 120))
     const surface = container.querySelector('[data-testid="wall-drag-surface"]') as HTMLElement
     expect(surface.style.transform).toContain('rotateY(0deg)')
+  })
+})
+
+describe('hover 景深（DoF）', () => {
+  it('hover 某卡片：其浮出 translateZ，其余卡片叶子 img 模糊，容器 preserve-3d 不破', () => {
+    const { container } = render(
+      <PhotoWall photos={[makePhoto(0), makePhoto(1), makePhoto(2)]} />
+    )
+    const cards = container.querySelectorAll('.group')
+    expect(cards.length).toBe(3)
+
+    fireEvent.pointerEnter(cards[1], { buttons: 0 })
+    expect((cards[1] as HTMLElement).style.transform).toContain('translateZ(48px)')
+
+    const frontImg0 = cards[0].querySelector('img:not([aria-hidden="true"])') as HTMLElement
+    expect(frontImg0.style.filter).toContain('blur(3px)')
+    const frontImg1 = cards[1].querySelector('img:not([aria-hidden="true"])') as HTMLElement
+    expect(frontImg1.style.filter).toBe('')
+
+    // 卡片容器 transformStyle 仍 preserve-3d（blur 只加叶子上）
+    expect((cards[0] as HTMLElement).style.transformStyle).toBe('preserve-3d')
+
+    fireEvent.pointerLeave(cards[1])
+    expect((cards[1] as HTMLElement).style.transform).not.toContain('translateZ(48px)')
+    expect((cards[0].querySelector('img:not([aria-hidden="true"])') as HTMLElement).style.filter).toBe('')
+  })
+
+  it('按住按键（拖拽中）时 hover 不触发景深', () => {
+    const { container } = render(<PhotoWall photos={[makePhoto(0), makePhoto(1)]} />)
+    const cards = container.querySelectorAll('.group')
+    fireEvent.pointerEnter(cards[1], { buttons: 1 })
+    expect((cards[1] as HTMLElement).style.transform).not.toContain('translateZ(48px)')
+    expect((cards[0].querySelector('img:not([aria-hidden="true"])') as HTMLElement).style.filter).toBe('')
   })
 })

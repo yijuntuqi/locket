@@ -1,4 +1,5 @@
-import { memo, useEffect, useState, type CSSProperties } from 'react'
+import { memo, useCallback, useEffect, useState, type CSSProperties } from 'react'
+import { CardFaces } from '@/components/wall/CardFaces'
 import { usePhotoWallRotation } from '@/hooks/usePhotoWallRotation'
 import type { FakePhoto } from '@/lib/fakePhotos'
 import { computeHeartCardTransforms } from '@/lib/heartGeometry3d'
@@ -12,6 +13,10 @@ interface HeartCardProps {
   widthPx: number
   delayMs: number
   mounted: boolean
+  focused: boolean
+  anyFocused: boolean
+  onHoverChange: (id: string, active: boolean) => void
+  sheenDelayMs: number
 }
 
 const HeartCard = memo(function HeartCard({
@@ -23,6 +28,10 @@ const HeartCard = memo(function HeartCard({
   widthPx,
   delayMs,
   mounted,
+  focused,
+  anyFocused,
+  onHoverChange,
+  sheenDelayMs,
 }: HeartCardProps) {
   const style: CSSProperties = {
     width: widthPx,
@@ -30,31 +39,20 @@ const HeartCard = memo(function HeartCard({
     transformStyle: 'preserve-3d',
     transform: `translate(-50%, -50%) translate3d(${x}px, ${y}px, ${z}px) rotateY(${rotateYDeg}deg)${
       mounted ? '' : ' scale(0)'
-    }`,
+    }${focused ? ' translateZ(48px)' : ''}`,
     transition: `transform 0.7s cubic-bezier(0.22, 1, 0.36, 1) ${delayMs}ms`,
     willChange: 'transform',
   }
   return (
-    <div className="absolute left-1/2 top-1/2" style={style}>
-      <img
-        src={photo.src}
-        alt={photo.caption}
-        draggable={false}
-        className="absolute inset-0 h-full w-full select-none rounded-xl object-cover shadow-lg"
-        style={{ backfaceVisibility: 'hidden' }}
-      />
-      <img
-        src={photo.src}
-        alt=""
-        aria-hidden
-        draggable={false}
-        className="absolute inset-0 h-full w-full select-none rounded-xl object-cover shadow-lg"
-        style={{
-          transform: 'rotateY(180deg)',
-          backfaceVisibility: 'hidden',
-          opacity: 0.6,
-        }}
-      />
+    <div
+      className="absolute left-1/2 top-1/2"
+      style={style}
+      onPointerEnter={(e) => {
+        if (e.buttons === 0) onHoverChange(photo.id, true)
+      }}
+      onPointerLeave={() => onHoverChange(photo.id, false)}
+    >
+      <CardFaces photo={photo} dimmed={anyFocused && !focused} sheenDelayMs={sheenDelayMs} />
     </div>
   )
 })
@@ -79,9 +77,14 @@ export function HeartCanvas({
     autoRotateDegPerSec === undefined ? {} : { autoRotateDegPerSec }
   )
   const [mounted, setMounted] = useState(false)
+  const [focusedId, setFocusedId] = useState<string | null>(null)
   useEffect(() => {
     const raf = requestAnimationFrame(() => setMounted(true))
     return () => cancelAnimationFrame(raf)
+  }, [])
+
+  const handleHoverChange = useCallback((id: string, active: boolean) => {
+    setFocusedId((prev) => (active ? id : prev === id ? null : prev))
   }, [])
 
   const scale = scalePx ?? Math.min(window.innerWidth, window.innerHeight) / 40
@@ -117,6 +120,10 @@ export function HeartCanvas({
               widthPx={cardWidth}
               delayMs={i * 45}
               mounted={mounted}
+              focused={photo.id === focusedId}
+              anyFocused={focusedId !== null}
+              onHoverChange={handleHoverChange}
+              sheenDelayMs={i * 220}
             />
           )
         })}

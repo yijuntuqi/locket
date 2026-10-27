@@ -94,3 +94,38 @@
     margin: 0;
   }
 }
+
+@keyframes sheen {
+  0% {
+    background-position: 130% 0;
+  }
+  55% {
+    background-position: -130% 0;
+  }
+  100% {
+    background-position: -130% 0;
+  }
+}
+
+@keyframes dust-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  25% {
+    transform: translate3d(14px, -20px, 0);
+  }
+  50% {
+    transform: translate3d(-12px, -34px, 0);
+  }
+  75% {
+    transform: translate3d(-20px, -14px, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-testid='card-sheen'],
+  [data-testid='dust-mote'] {
+    animation: none !important;
+  }
+}

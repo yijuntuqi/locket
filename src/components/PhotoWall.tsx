@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { PhotoWallCard } from '@/components/PhotoWallCard'
 import { usePhotoWallRotation } from '@/hooks/usePhotoWallRotation'
 import type { FakePhoto } from '@/lib/fakePhotos'
@@ -28,6 +28,12 @@ export function PhotoWall({
   )
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState(0)
+  const [focusedId, setFocusedId] = useState<string | null>(null)
+
+  // 景深聚焦：enter 聚焦、leave 仅在自己仍是焦点时清除（稳定引用，保 memo）
+  const handleHoverChange = useCallback((id: string, active: boolean) => {
+    setFocusedId((prev) => (active ? id : prev === id ? null : prev))
+  }, [])
 
   useLayoutEffect(() => {
     const el = containerRef.current
@@ -79,6 +85,10 @@ export function PhotoWall({
             angleDeg={placements[i].angleDeg}
             radiusPx={placements[i].radiusPx}
             widthPx={scaledCardWidth}
+            focused={photo.id === focusedId}
+            anyFocused={focusedId !== null}
+            onHoverChange={handleHoverChange}
+            sheenDelayMs={i * 220}
             onDelete={onDeletePhoto}
           />
         ))}

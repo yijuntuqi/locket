@@ -208,3 +208,11 @@ describe('WallPage 隐藏式控制层（P5）', () => {
     expect(topPanel.className).toContain('opacity-100')
   })
 })
+
+describe('WallPage 场景氛围（P5）', () => {
+  it('相册页渲染聚光遮罩与尘埃粒子', async () => {
+    await renderAlbumPage('albumScene', '相册Scene', [photo('p1', 0, 'albumScene', '2025-10-01T08:00:00Z')])
+    expect(document.body.querySelector('[data-testid="scene-light"]')).toBeTruthy()
+    expect(document.body.querySelectorAll('[data-testid="dust-mote"]').length).toBe(24)
+  })
+})
