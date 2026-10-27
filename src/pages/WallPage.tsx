@@ -11,6 +11,7 @@ import { SortableGridView } from '@/components/wall/SortableGridView'
 import { TimelineView } from '@/components/wall/TimelineView'
 import { UploadButton } from '@/components/wall/UploadButton'
 import type { FakePhoto } from '@/lib/fakePhotos'
+import { glassPill } from '@/lib/glass'
 import { deletePhoto, listPhotosWithUrls, persistSortOrder, reorderPhotos } from '@/lib/photos'
 import { publishAlbumEvent } from '@/lib/realtime'
 import { supabase } from '@/lib/supabase'
@@ -187,12 +188,12 @@ export default function WallPage() {
       <div className="pointer-events-none absolute left-0 right-0 top-0 z-10 flex items-center justify-between p-4">
         <Link
           to="/"
-          className="pointer-events-auto rounded-full border border-white/20 bg-black/40 px-3 py-1.5 text-sm text-white backdrop-blur hover:bg-black/60"
+          className={`pointer-events-auto px-3 py-1.5 text-sm text-white transition-colors hover:bg-white/10 ${glassPill}`}
         >
           ← 返回
         </Link>
         <div className="pointer-events-auto flex items-center gap-3">
-          <div className="flex overflow-hidden rounded-full border border-white/20 bg-black/40 backdrop-blur">
+          <div className={`flex overflow-hidden ${glassPill}`}>
             {(Object.keys(VIEW_LABELS) as ViewMode[]).map((mode) => (
               <button
                 key={mode}
@@ -208,7 +209,7 @@ export default function WallPage() {
               </button>
             ))}
           </div>
-          <span className="rounded-full border border-white/20 bg-black/40 px-3 py-1.5 text-sm text-white backdrop-blur">
+          <span className={`px-3 py-1.5 text-sm text-white ${glassPill}`}>
             {album.name}
           </span>
           {viewMode !== 'wall' && (
@@ -216,8 +217,8 @@ export default function WallPage() {
               type="button"
               aria-pressed={sortMode}
               onClick={() => setSortMode((prev) => !prev)}
-              className={`rounded-full border border-white/20 px-3 py-1.5 text-sm backdrop-blur transition-colors ${
-                sortMode ? 'bg-white/20 text-white' : 'bg-black/40 text-white/60 hover:text-white'
+              className={`px-3 py-1.5 text-sm transition-colors ${glassPill} ${
+                sortMode ? 'bg-white/20 text-white' : 'text-white/60 hover:text-white'
               }`}
             >
               排序
@@ -228,7 +229,7 @@ export default function WallPage() {
       </div>
 
       {uploadMessage && (
-        <div className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full border border-white/20 bg-black/60 px-4 py-2 text-sm text-white backdrop-blur">
+        <div className={`absolute bottom-4 left-1/2 z-10 -translate-x-1/2 px-4 py-2 text-sm text-white ${glassPill}`}>
           {uploadMessage}
         </div>
       )}

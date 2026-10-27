@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { glassPanel } from '@/lib/glass'
 import { supabase } from '@/lib/supabase'
 
 type Mode = 'login' | 'signup'
@@ -56,7 +57,7 @@ export default function LoginPage() {
     <div className="flex h-full items-center justify-center">
       <form
         onSubmit={onSubmit}
-        className="w-80 space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur"
+        className={`w-80 space-y-4 p-6 ${glassPanel}`}
       >
         <h1 className="text-center text-xl font-semibold text-white">
           Locket

@@ -10,6 +10,7 @@ import {
   renameAlbum,
   ValidationError,
 } from '@/lib/albums'
+import { glassPanel } from '@/lib/glass'
 import { publishAlbumEvent } from '@/lib/realtime'
 import { supabase } from '@/lib/supabase'
 import type { Album } from '@/lib/types'
@@ -126,10 +127,7 @@ export default function AlbumsPage() {
         ) : (
           <ul className="grid grid-cols-2 gap-4 md:grid-cols-3">
             {albums.map((album) => (
-              <li
-                key={album.id}
-                className="rounded-xl border border-white/10 bg-white/5 p-4"
-              >
+              <li key={album.id} className={`p-4 transition-colors hover:bg-white/10 ${glassPanel}`}>
                 <Link
                   to={`/album/${album.id}`}
                   className="block text-lg font-medium text-white hover:underline"
@@ -177,7 +175,7 @@ export default function AlbumsPage() {
           onClick={() => setConfirmDelete(null)}
         >
           <div
-            className="w-72 space-y-4 rounded-2xl border border-white/10 bg-slate-900 p-5"
+            className={`w-72 space-y-4 p-5 ${glassPanel}`}
             onClick={(e) => e.stopPropagation()}
           >
             <p className="text-white">

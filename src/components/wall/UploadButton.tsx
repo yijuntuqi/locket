@@ -1,4 +1,5 @@
 import { useRef, type ChangeEvent } from 'react'
+import { glassPill } from '@/lib/glass'
 
 interface UploadButtonProps {
   pending: boolean
@@ -29,7 +30,7 @@ export function UploadButton({ pending, onFiles }: UploadButtonProps) {
         type="button"
         disabled={pending}
         onClick={() => inputRef.current?.click()}
-        className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm text-white backdrop-blur hover:bg-white/20 disabled:opacity-50"
+        className={`px-4 py-2 text-sm text-white transition-colors hover:bg-white/20 disabled:opacity-50 ${glassPill}`}
       >
         {pending ? '上传中…' : '上传照片'}
       </button>
