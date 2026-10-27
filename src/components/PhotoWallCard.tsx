@@ -70,7 +70,7 @@ export const PhotoWallCard = memo(function PhotoWallCard({
             e.stopPropagation()
             handleDelete()
           }}
-          className="absolute right-1 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-xs text-white opacity-0 transition-opacity hover:bg-red-500/80 focus:opacity-100 group-hover:opacity-100"
+          className="absolute right-1 top-1 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-sm text-white opacity-0 transition-opacity hover:bg-red-500/80 focus:opacity-100 group-hover:opacity-100"
           style={{ backfaceVisibility: 'hidden', transform: 'translateZ(1px)' }}
         >
           ✕

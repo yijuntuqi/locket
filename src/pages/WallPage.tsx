@@ -3,13 +3,13 @@ import { Link, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { PhotoWall } from '@/components/PhotoWall'
 import { ALBUM_UPDATED_EVENT } from '@/components/RealtimeListener'
-import { Dock } from '@/components/wall/Dock'
+import { ControlsBar } from '@/components/wall/ControlsBar'
 import { EdgeReveal } from '@/components/wall/EdgeReveal'
-import { HeartCanvas } from '@/components/wall/HeartCanvas'
 import { DustMotes, SceneLight } from '@/components/wall/SceneAtmosphere'
 import { UploadButton } from '@/components/wall/UploadButton'
 import type { FakePhoto } from '@/lib/fakePhotos'
 import { glassPill } from '@/lib/glass'
+import { DEFAULT_LAYOUT, type WallLayout } from '@/lib/layouts'
 import { deletePhoto, listPhotosWithUrls } from '@/lib/photos'
 import { publishAlbumEvent } from '@/lib/realtime'
 import { supabase } from '@/lib/supabase'
@@ -27,7 +27,7 @@ export default function WallPage() {
   const [error, setError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadMessage, setUploadMessage] = useState<string | null>(null)
-  const [heartMode, setHeartMode] = useState(false)
+  const [layout, setLayout] = useState<WallLayout>(DEFAULT_LAYOUT)
   const [autoRotate, setAutoRotate] = useState(true)
 
   const load = useCallback(async () => {
@@ -65,7 +65,6 @@ export default function WallPage() {
 
   useEffect(() => {
     albumIdRef.current = albumId
-    setHeartMode(false)
     load()
       .catch(() => undefined)
       .finally(() => setLoading(false))
@@ -173,46 +172,21 @@ export default function WallPage() {
         </div>
       ) : (
         <div className="h-full">
-          {heartMode ? (
-            <HeartCanvas photos={wallItems} autoRotateDegPerSec={autoRotate ? 6 : 0} />
-          ) : (
-            <PhotoWall
-              photos={wallItems}
-              autoRotateDegPerSec={autoRotate ? 6 : 0}
-              onDeletePhoto={(id) => void handleDeletePhoto(id)}
-            />
-          )}
+          <PhotoWall
+            photos={wallItems}
+            autoRotateDegPerSec={autoRotate ? 6 : 0}
+            onDeletePhoto={(id) => void handleDeletePhoto(id)}
+          />
         </div>
       )}
 
-      <EdgeReveal edge="bottom">
-        <div className="flex justify-center p-4">
-          <Dock>
-            <button
-              type="button"
-              aria-pressed={heartMode}
-              disabled={wallItems.length === 0}
-              onClick={() => setHeartMode((prev) => !prev)}
-              className={`rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 ${
-                heartMode ? 'bg-white/20 text-white' : 'text-white/80 hover:text-white'
-              }`}
-            >
-              心形
-            </button>
-            <button
-              type="button"
-              aria-pressed={autoRotate}
-              disabled={wallItems.length === 0}
-              onClick={() => setAutoRotate((prev) => !prev)}
-              className={`rounded-full px-3 py-1.5 text-sm transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 ${
-                autoRotate ? 'bg-white/20 text-white' : 'text-white/80 hover:text-white'
-              }`}
-            >
-              自动旋转
-            </button>
-          </Dock>
-        </div>
-      </EdgeReveal>
+      <ControlsBar
+        currentLayout={layout}
+        onLayoutChange={setLayout}
+        autoRotate={autoRotate}
+        onToggleAutoRotate={() => setAutoRotate((prev) => !prev)}
+        disabled={wallItems.length === 0}
+      />
     </div>
   )
 }

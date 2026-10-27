@@ -18,7 +18,12 @@ export function usePhotoWallRotation(opts: UsePhotoWallRotationOptions = {}) {
     lastX: number
     lastT: number
   } | null>(null)
+  const pausedRef = useRef(false)
   const reducedMotionRef = useRef(false)
+
+  const setPaused = (paused: boolean) => {
+    pausedRef.current = paused
+  }
 
   useEffect(() => {
     const mql = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -36,7 +41,7 @@ export function usePhotoWallRotation(opts: UsePhotoWallRotationOptions = {}) {
     const tick = (now: number) => {
       const dt = Math.min((now - last) / 1000, 0.05)
       last = now
-      if (!dragRef.current) {
+      if (!dragRef.current && !pausedRef.current) {
         const auto = reducedMotionRef.current ? 0 : autoRotateDegPerSec
         stateRef.current = stepRotation(stateRef.current, dt, auto, inertiaHalfLifeSec)
         setAngleDeg(stateRef.current.angleDeg)
@@ -97,6 +102,7 @@ export function usePhotoWallRotation(opts: UsePhotoWallRotationOptions = {}) {
   return {
     angleDeg,
     isDragging,
+    setPaused,
     handlers: {
       onPointerDown,
       onPointerMove,

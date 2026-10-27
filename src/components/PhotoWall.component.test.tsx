@@ -205,3 +205,29 @@ describe('reduced-motion 合规（复审修复）', () => {
     })
   })
 })
+
+describe('hover 暂停自转（P6 删除优化）', () => {
+  it('hover 卡片期间自转暂停，离开后恢复', async () => {
+    const { container } = render(<PhotoWall photos={[makePhoto(0), makePhoto(1)]} />)
+    const surface = () =>
+      container.querySelector('[data-testid="wall-drag-surface"]') as HTMLElement
+    await new Promise((r) => setTimeout(r, 120))
+    expect(surface().style.transform).not.toContain('rotateY(0deg)')
+
+    const cards = container.querySelectorAll('.group')
+    fireEvent.pointerEnter(cards[0], { buttons: 0 })
+    const frozen = surface().style.transform
+    await new Promise((r) => setTimeout(r, 120))
+    expect(surface().style.transform).toBe(frozen)
+
+    fireEvent.pointerLeave(cards[0])
+    await new Promise((r) => setTimeout(r, 120))
+    expect(surface().style.transform).not.toBe(frozen)
+  })
+
+  it('删除按钮为大尺寸', () => {
+    const { container } = render(<PhotoWall photos={[makePhoto(0)]} onDeletePhoto={() => undefined} />)
+    const button = container.querySelector('button[aria-label^="删除"]') as HTMLElement
+    expect(button.className).toContain('h-8')
+  })
+})

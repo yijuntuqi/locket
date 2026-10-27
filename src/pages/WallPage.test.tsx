@@ -109,9 +109,7 @@ async function renderAlbumPage(albumId: string, name: string, photos: PhotoWithU
 
 /** 触边浮现顶栏与 Dock（隐藏面板 visibility:hidden，a11y 树查不到内部控件） */
 function revealControls() {
-  for (const strip of screen.getAllByRole('button', { name: '显示控制栏' })) {
-    fireEvent.pointerEnter(strip)
-  }
+  fireEvent.pointerEnter(screen.getByRole('button', { name: '显示控制栏' }))
 }
 
 describe('WallPage 路由参数切换竞态', () => {
@@ -158,23 +156,6 @@ describe('WallPage 路由参数切换竞态', () => {
   })
 })
 
-describe('WallPage 心形模式（P4）', () => {
-  const PHOTOS = [photo('p1', 0, 'albumHeart', '2025-10-01T08:00:00Z')]
-
-  it('点心形切换 3D 爱心，再点回到圆柱墙', async () => {
-    await renderAlbumPage('albumHeart', '相册Heart', PHOTOS)
-    revealControls()
-    expect(document.body.querySelector('[data-testid="heart-canvas"]')).toBeNull()
-
-    fireEvent.click(screen.getByRole('button', { name: '心形' }))
-    expect(document.body.querySelector('[data-testid="heart-canvas"]')).toBeTruthy()
-
-    fireEvent.click(screen.getByRole('button', { name: '心形' }))
-    expect(document.body.querySelector('[data-testid="heart-canvas"]')).toBeNull()
-  })
-
-})
-
 describe('WallPage 自动旋转开关（P4）', () => {
   const PHOTOS = [photo('p1', 0, 'albumRotate', '2025-10-01T08:00:00Z')]
 
@@ -194,10 +175,9 @@ describe('WallPage 自动旋转开关（P4）', () => {
 })
 
 describe('WallPage 空相册（P4 修复）', () => {
-  it('空相册下心形与自动旋转按钮禁用', async () => {
+  it('空相册下控制条禁用', async () => {
     await renderAlbumPage('albumEmpty', '空相册', [])
-    revealControls()
-    expect((screen.getByRole('button', { name: '心形' }) as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByRole('button', { name: '布局：圆柱墙' }) as HTMLButtonElement).disabled).toBe(true)
     expect((screen.getByRole('button', { name: '自动旋转' }) as HTMLButtonElement).disabled).toBe(true)
   })
 })
@@ -211,10 +191,8 @@ describe('WallPage 隐藏式控制层（P5）', () => {
     const topPanel = document.body.querySelector('[data-testid="edge-reveal-panel-top"]') as HTMLElement
     expect(topPanel.className).toContain('opacity-0')
 
-    const strips = screen.getAllByRole('button', { name: '显示控制栏' })
-    expect(strips.length).toBe(2)
-
-    fireEvent.pointerEnter(strips[0])
+    const strip = screen.getByRole('button', { name: '显示控制栏' })
+    fireEvent.pointerEnter(strip)
     expect(topPanel.className).toContain('opacity-100')
   })
 })
