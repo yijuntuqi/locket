@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
-import { act, cleanup, render, screen } from '@testing-library/react'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import WallPage from './WallPage'
+import { persistSortOrder } from '@/lib/photos'
 import type { PhotoWithUrl } from '@/lib/types'
 
 interface Deferred<T> {
@@ -39,13 +40,18 @@ vi.mock('@/lib/supabase', () => ({
   },
 }))
 
-vi.mock('@/lib/photos', () => ({
-  listPhotosWithUrls: (albumId: string) => {
-    photoDef[albumId] ??= deferred()
-    return photoDef[albumId].promise
-  },
-  deletePhoto: vi.fn(),
-}))
+vi.mock('@/lib/photos', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/photos')>()
+  return {
+    ...actual,
+    listPhotosWithUrls: (albumId: string) => {
+      photoDef[albumId] ??= deferred()
+      return photoDef[albumId].promise
+    },
+    deletePhoto: vi.fn(),
+    persistSortOrder: vi.fn(async () => {}),
+  }
+})
 
 vi.mock('@/lib/realtime', () => ({
   publishAlbumEvent: vi.fn(async () => {}),
@@ -53,14 +59,14 @@ vi.mock('@/lib/realtime', () => ({
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn() } }))
 
-function photo(id: string, sortOrder: number, albumId: string): PhotoWithUrl {
+function photo(id: string, sortOrder: number, albumId: string, createdAt = ''): PhotoWithUrl {
   return {
     id,
     album_id: albumId,
     uploader_id: 'u1',
     storage_path: `u1/${albumId}/${id}.webp`,
     sort_order: sortOrder,
-    created_at: '',
+    created_at: createdAt,
     url: `https://signed/${id}`,
   }
 }
@@ -80,6 +86,27 @@ beforeAll(() => {
 })
 
 afterEach(cleanup)
+
+beforeEach(() => {
+  vi.clearAllMocks()
+})
+
+async function renderAlbumPage(albumId: string, name: string, photos: PhotoWithUrl[]) {
+  const router = createMemoryRouter(
+    [{ path: '/album/:albumId', element: <WallPage /> }],
+    { initialEntries: [`/album/${albumId}`] }
+  )
+  render(<RouterProvider router={router} />)
+  albumDef[albumId].resolve({
+    data: { id: albumId, owner_id: 'u1', name, allow_collab_upload: false, created_at: '' },
+    error: null,
+  })
+  await act(async () => {
+    await new Promise((r) => setTimeout(r, 0))
+  })
+  photoDef[albumId].resolve(photos)
+  await screen.findByText(name)
+}
 
 describe('WallPage 路由参数切换竞态', () => {
   it('切到相册 B 后，迟到的相册 A 响应不得覆盖 B 的内容', async () => {
@@ -122,5 +149,61 @@ describe('WallPage 路由参数切换竞态', () => {
     })
     expect(screen.getByText('相册B')).toBeTruthy()
     expect(screen.getAllByAltText(/照片 /)).toHaveLength(2)
+  })
+})
+
+describe('WallPage 三视图与排序', () => {
+  const PHOTOS = [
+    photo('p1', 0, 'albumP3', '2025-10-01T08:00:00Z'),
+    photo('p2', 1, 'albumP3', '2025-10-15T08:00:00Z'),
+  ]
+
+  it('头部提供 3D 墙/时间轴/瀑布流 三个切换按钮，3D 墙下无排序按钮', async () => {
+    await renderAlbumPage('albumP3', '相册P3', PHOTOS)
+    expect(screen.getByRole('button', { name: '3D 墙' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: '时间轴' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: '瀑布流' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: '排序' })).toBeNull()
+  })
+
+  it('切到时间轴渲染月分组，点图打开灯箱，Escape 关闭', async () => {
+    await renderAlbumPage('albumP3', '相册P3', PHOTOS)
+    fireEvent.click(screen.getByRole('button', { name: '时间轴' }))
+
+    expect(screen.getByText('2025 年 10 月')).toBeTruthy()
+    // DOM 顺序按时间新→旧：p2 在前
+    const imgs = document.body.querySelectorAll('img')
+    expect(imgs[0].getAttribute('src')).toBe('https://signed/p2')
+
+    fireEvent.click(imgs[0])
+    expect(screen.getByText('1 / 2')).toBeTruthy()
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(screen.queryByText('1 / 2')).toBeNull()
+  })
+
+  it('瀑布流下开启排序模式显示可拖拽网格，drop 触发 persistSortOrder', async () => {
+    await renderAlbumPage('albumP3', '相册P3', PHOTOS)
+    fireEvent.click(screen.getByRole('button', { name: '瀑布流' }))
+    fireEvent.click(screen.getByRole('button', { name: '排序' }))
+
+    const items = document.body.querySelectorAll('[data-testid="sortable-item"]')
+    expect(items.length).toBe(2)
+
+    const dt = {
+      setData: vi.fn(),
+      getData: vi.fn((t: string) => (t === 'text/plain' ? '0' : '')),
+      effectAllowed: '',
+      dropEffect: '',
+    }
+    fireEvent.dragStart(items[0], { dataTransfer: dt })
+    fireEvent.drop(items[1], { dataTransfer: dt })
+
+    await vi.waitFor(() => {
+      expect(persistSortOrder).toHaveBeenCalledWith([
+        { id: 'p2', sort_order: 0 },
+        { id: 'p1', sort_order: 1 },
+      ])
+    })
   })
 })
