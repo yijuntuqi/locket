@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { PhotoWallCard } from '@/components/PhotoWallCard'
 import { usePhotoWallRotation } from '@/hooks/usePhotoWallRotation'
 import type { FakePhoto } from '@/lib/fakePhotos'
@@ -29,9 +29,15 @@ export function PhotoWall({
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState(0)
   const [focusedId, setFocusedId] = useState<string | null>(null)
+  const reducedMotionRef = useRef(false)
+
+  useEffect(() => {
+    reducedMotionRef.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  }, [])
 
   // 景深聚焦：enter 聚焦、leave 仅在自己仍是焦点时清除（稳定引用，保 memo）
   const handleHoverChange = useCallback((id: string, active: boolean) => {
+    if (reducedMotionRef.current) return
     setFocusedId((prev) => (active ? id : prev === id ? null : prev))
   }, [])
 

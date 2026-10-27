@@ -179,3 +179,29 @@ describe('hover 景深（DoF）', () => {
     expect((cards[0].querySelector('img:not([aria-hidden="true"])') as HTMLElement).style.filter).toBe('')
   })
 })
+
+describe('reduced-motion 合规（复审修复）', () => {
+  it('reduced-motion 下 hover 不触发景深', () => {
+    vi.stubGlobal('matchMedia', () => ({
+      matches: true,
+      addEventListener() {},
+      removeEventListener() {},
+    }))
+    const { container } = render(<PhotoWall photos={[makePhoto(0), makePhoto(1)]} />)
+    const cards = container.querySelectorAll('.group')
+    fireEvent.pointerEnter(cards[1], { buttons: 0 })
+    expect((cards[1] as HTMLElement).style.transform).not.toContain('translateZ(48px)')
+
+    vi.unstubAllGlobals()
+    vi.stubGlobal('matchMedia', () => ({
+      matches: false,
+      addEventListener() {},
+      removeEventListener() {},
+    }))
+    vi.stubGlobal('ResizeObserver', class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    })
+  })
+})

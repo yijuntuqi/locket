@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
-import { cleanup, render } from '@testing-library/react'
+import { cleanup, fireEvent, render } from '@testing-library/react'
 import type { FakePhoto } from '@/lib/fakePhotos'
 import { HeartCanvas } from './HeartCanvas'
 
@@ -38,5 +38,18 @@ describe('HeartCanvas', () => {
     const perspectiveEl = container.firstElementChild as HTMLElement
     expect(perspectiveEl.style.perspective).toBe('1200px')
     expect(container.querySelector('[data-testid="wall-drag-surface"]')).toBeTruthy()
+  })
+})
+
+describe('复审修复（hover 响应）', () => {
+  it('hover 浮出的 transition 不带入场 stagger 延迟', () => {
+    const { container } = render(
+      <HeartCanvas photos={[makePhoto(0), makePhoto(1), makePhoto(2)]} scalePx={10} />
+    )
+    const card2 = container
+      .querySelectorAll('img:not([aria-hidden="true"])')[1]
+      .parentElement as HTMLElement
+    fireEvent.pointerEnter(card2, { buttons: 0 })
+    expect(card2.style.transition).toBe('transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)')
   })
 })

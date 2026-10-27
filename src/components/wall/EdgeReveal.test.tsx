@@ -31,7 +31,7 @@ describe('EdgeReveal', () => {
     const { container, getByRole } = renderReveal('top')
     expect(container.querySelector('[data-testid="edge-reveal-top"]')).toBeTruthy()
 
-    const panel = getByRole('button', { name: '控制按钮' }).parentElement as HTMLElement
+    const panel = container.querySelector('[data-testid="edge-reveal-panel-top"]') as HTMLElement
     expect(panel.className).toContain('opacity-0')
     expect(panel.className).toContain('-translate-y-full')
 
@@ -50,8 +50,8 @@ describe('EdgeReveal', () => {
   })
 
   it('edge=bottom 隐藏时向下位移', () => {
-    const { getByRole } = renderReveal('bottom')
-    const panel = getByRole('button', { name: '控制按钮' }).parentElement as HTMLElement
+    const { container } = renderReveal('bottom')
+    const panel = container.querySelector('[data-testid="edge-reveal-panel-bottom"]') as HTMLElement
     expect(panel.className).toContain('translate-y-full')
   })
 
@@ -61,13 +61,51 @@ describe('EdgeReveal', () => {
       addEventListener() {},
       removeEventListener() {},
     }))
-    const { getByRole } = renderReveal('top')
-    const panel = getByRole('button', { name: '控制按钮' }).parentElement as HTMLElement
+    const { container, getByRole } = renderReveal('top')
+    const panel = container.querySelector('[data-testid="edge-reveal-panel-top"]') as HTMLElement
     const strip = getByRole('button', { name: '显示控制栏' })
 
     fireEvent.click(strip)
     expect(panel.className).toContain('opacity-100')
     fireEvent.click(strip)
     expect(panel.className).toContain('opacity-0')
+  })
+})
+
+describe('复审修复（触屏关闭/键盘/可见性）', () => {
+  it('触屏模式打开后面板本身可点击关闭', () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query.includes('hover: none'),
+      addEventListener() {},
+      removeEventListener() {},
+    }))
+    const { container, getByRole } = renderReveal('top')
+    const panel = container.querySelector('[data-testid="edge-reveal-panel-top"]') as HTMLElement
+    const strip = getByRole('button', { name: '显示控制栏' })
+
+    fireEvent.click(strip)
+    expect(panel.className).toContain('opacity-100')
+    fireEvent.click(panel)
+    expect(panel.className).toContain('opacity-0')
+  })
+
+  it('键盘 Enter 在触发条上切换显示', () => {
+    const { container, getByRole } = renderReveal('top')
+    const panel = container.querySelector('[data-testid="edge-reveal-panel-top"]') as HTMLElement
+    const strip = getByRole('button', { name: '显示控制栏' })
+    expect(strip.getAttribute('tabindex')).toBe('0')
+
+    fireEvent.keyDown(strip, { key: 'Enter' })
+    expect(panel.className).toContain('opacity-100')
+    fireEvent.keyDown(strip, { key: 'Enter' })
+    expect(panel.className).toContain('opacity-0')
+  })
+
+  it('隐藏面板 visibility:hidden，移出 tab 序列', () => {
+    const { container, getByRole } = renderReveal('bottom')
+    const panel = container.querySelector('[data-testid="edge-reveal-panel-bottom"]') as HTMLElement
+    expect(panel.style.visibility).toBe('hidden')
+    fireEvent.pointerEnter(getByRole('button', { name: '显示控制栏' }))
+    expect(panel.style.visibility).toBe('visible')
   })
 })

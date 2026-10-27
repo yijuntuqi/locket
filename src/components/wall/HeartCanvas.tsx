@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useState, type CSSProperties } from 'react'
+import { memo, useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { CardFaces } from '@/components/wall/CardFaces'
 import { usePhotoWallRotation } from '@/hooks/usePhotoWallRotation'
 import type { FakePhoto } from '@/lib/fakePhotos'
@@ -40,7 +40,9 @@ const HeartCard = memo(function HeartCard({
     transform: `translate(-50%, -50%) translate3d(${x}px, ${y}px, ${z}px) rotateY(${rotateYDeg}deg)${
       mounted ? '' : ' scale(0)'
     }${focused ? ' translateZ(48px)' : ''}`,
-    transition: `transform 0.7s cubic-bezier(0.22, 1, 0.36, 1) ${delayMs}ms`,
+    transition: focused
+      ? 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)'
+      : `transform 0.7s cubic-bezier(0.22, 1, 0.36, 1) ${delayMs}ms`,
     willChange: 'transform',
   }
   return (
@@ -78,12 +80,15 @@ export function HeartCanvas({
   )
   const [mounted, setMounted] = useState(false)
   const [focusedId, setFocusedId] = useState<string | null>(null)
+  const reducedMotionRef = useRef(false)
   useEffect(() => {
+    reducedMotionRef.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const raf = requestAnimationFrame(() => setMounted(true))
     return () => cancelAnimationFrame(raf)
   }, [])
 
   const handleHoverChange = useCallback((id: string, active: boolean) => {
+    if (reducedMotionRef.current) return
     setFocusedId((prev) => (active ? id : prev === id ? null : prev))
   }, [])
 

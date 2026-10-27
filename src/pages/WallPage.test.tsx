@@ -106,6 +106,14 @@ async function renderAlbumPage(albumId: string, name: string, photos: PhotoWithU
   await screen.findByText(name)
 }
 
+
+/** 触边浮现顶栏与 Dock（隐藏面板 visibility:hidden，a11y 树查不到内部控件） */
+function revealControls() {
+  for (const strip of screen.getAllByRole('button', { name: '显示控制栏' })) {
+    fireEvent.pointerEnter(strip)
+  }
+}
+
 describe('WallPage 路由参数切换竞态', () => {
   it('切到相册 B 后，迟到的相册 A 响应不得覆盖 B 的内容', async () => {
     const router = createMemoryRouter(
@@ -155,6 +163,7 @@ describe('WallPage 心形模式（P4）', () => {
 
   it('点心形切换 3D 爱心，再点回到圆柱墙', async () => {
     await renderAlbumPage('albumHeart', '相册Heart', PHOTOS)
+    revealControls()
     expect(document.body.querySelector('[data-testid="heart-canvas"]')).toBeNull()
 
     fireEvent.click(screen.getByRole('button', { name: '心形' }))
@@ -171,6 +180,7 @@ describe('WallPage 自动旋转开关（P4）', () => {
 
   it('Dock 自动旋转默认开启，点击关闭再开启', async () => {
     await renderAlbumPage('albumRotate', '相册Rotate', PHOTOS)
+    revealControls()
     const btn = screen.getByRole('button', { name: '自动旋转' })
     expect(btn.getAttribute('aria-pressed')).toBe('true')
 
@@ -186,6 +196,7 @@ describe('WallPage 自动旋转开关（P4）', () => {
 describe('WallPage 空相册（P4 修复）', () => {
   it('空相册下心形与自动旋转按钮禁用', async () => {
     await renderAlbumPage('albumEmpty', '空相册', [])
+    revealControls()
     expect((screen.getByRole('button', { name: '心形' }) as HTMLButtonElement).disabled).toBe(true)
     expect((screen.getByRole('button', { name: '自动旋转' }) as HTMLButtonElement).disabled).toBe(true)
   })
@@ -197,8 +208,7 @@ describe('WallPage 隐藏式控制层（P5）', () => {
   it('顶栏与 Dock 默认隐藏，指针进入触发条浮现', async () => {
     await renderAlbumPage('albumReveal', '相册Reveal', PHOTOS)
 
-    const topPanel = screen.getByRole('link', { name: '← 返回' }).parentElement!
-      .parentElement as HTMLElement
+    const topPanel = document.body.querySelector('[data-testid="edge-reveal-panel-top"]') as HTMLElement
     expect(topPanel.className).toContain('opacity-0')
 
     const strips = screen.getAllByRole('button', { name: '显示控制栏' })
