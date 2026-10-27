@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { stepRotation, type RotationState } from '@/lib/rotationPhysics'
 
 interface UsePhotoWallRotationOptions {
@@ -21,9 +21,9 @@ export function usePhotoWallRotation(opts: UsePhotoWallRotationOptions = {}) {
   const pausedRef = useRef(false)
   const reducedMotionRef = useRef(false)
 
-  const setPaused = (paused: boolean) => {
+  const setPaused = useCallback((paused: boolean) => {
     pausedRef.current = paused
-  }
+  }, [])
 
   useEffect(() => {
     const mql = window.matchMedia('(prefers-reduced-motion: reduce)')

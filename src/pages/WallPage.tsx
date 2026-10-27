@@ -125,10 +125,12 @@ export default function WallPage() {
 
   async function handleLayoutChange(next: WallLayout) {
     if (!album) return
+    const previous = layout
     setLayout(next)
     try {
       await setAlbumLayout(album.id, next)
     } catch (err) {
+      setLayout(previous)
       toast.error(err instanceof Error ? err.message : '布局保存失败')
     }
   }

@@ -56,7 +56,7 @@ export function SpiralWall({ photos, autoRotateDegPerSec, onDeletePhoto }: Spira
           const rad = (p.angleDeg * Math.PI) / 180
           const x = Math.cos(rad) * radius
           const y = Math.sin(rad) * radius
-          const rotateYDeg = (Math.atan2(x, p.z) * 180) / Math.PI
+          // 卡片正面朝观察者（相机在 +z）：螺旋全部点 z<=0，朝外径向会背对镜头
           const focused = photo.id === focusedId
           return (
             <WallCard
@@ -64,7 +64,7 @@ export function SpiralWall({ photos, autoRotateDegPerSec, onDeletePhoto }: Spira
               photo={photo}
               widthPx={cardWidth}
               transition="transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)"
-              transform={`translate(-50%, -50%) translate3d(${Math.round(x)}px, ${Math.round(y)}px, ${p.z}px) rotateY(${rotateYDeg.toFixed(1)}deg)${focused ? FOCUS_LIFT : ''}`}
+              transform={`translate(-50%, -50%) translate3d(${Math.round(x)}px, ${Math.round(y)}px, ${p.z}px)${focused ? FOCUS_LIFT : ''}`}
               focused={focused}
               anyFocused={anyFocused}
               onHoverChange={handleHoverChange}

@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { PhotoWallCard } from '@/components/PhotoWallCard'
 import { usePhotoWallRotation } from '@/hooks/usePhotoWallRotation'
+import { useWallFocus } from '@/hooks/useWallFocus'
 import type { FakePhoto } from '@/lib/fakePhotos'
 import { computePlacements, computeRadius, computeResponsiveScale } from '@/lib/wallGeometry'
 
@@ -28,24 +29,7 @@ export function PhotoWall({
   )
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState(0)
-  const [focusedId, setFocusedId] = useState<string | null>(null)
-  const reducedMotionRef = useRef(false)
-
-  useEffect(() => {
-    reducedMotionRef.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  }, [])
-
-  // hover 聚焦时暂停自转：照片稳住了，删除/端详都好操作
-  useEffect(() => {
-    setPaused(focusedId !== null)
-    return () => setPaused(false)
-  }, [focusedId, setPaused])
-
-  // 景深聚焦：enter 聚焦、leave 仅在自己仍是焦点时清除（稳定引用，保 memo）
-  const handleHoverChange = useCallback((id: string, active: boolean) => {
-    if (reducedMotionRef.current) return
-    setFocusedId((prev) => (active ? id : prev === id ? null : prev))
-  }, [])
+  const { focusedId, anyFocused, handleHoverChange } = useWallFocus(setPaused)
 
   useLayoutEffect(() => {
     const el = containerRef.current
@@ -98,7 +82,7 @@ export function PhotoWall({
             radiusPx={placements[i].radiusPx}
             widthPx={scaledCardWidth}
             focused={photo.id === focusedId}
-            anyFocused={focusedId !== null}
+            anyFocused={anyFocused}
             onHoverChange={handleHoverChange}
             sheenDelayMs={i * 220}
             onDelete={onDeletePhoto}

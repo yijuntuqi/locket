@@ -15,5 +15,5 @@ export function isWallLayout(value: unknown): value is WallLayout {
 }
 
 export function layoutLabel(layout: WallLayout): string {
-  return WALL_LAYOUTS.find((l) => l.id === layout)?.label ?? DEFAULT_LAYOUT
+  return WALL_LAYOUTS.find((l) => l.id === layout)?.label ?? '圆柱墙'
 }

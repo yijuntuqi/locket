@@ -253,3 +253,18 @@ describe('WallPage 布局持久化（P6）', () => {
     expect(screen.getByRole('button', { name: '布局：螺旋隧道' })).toBeTruthy()
   })
 })
+
+describe('WallPage 布局保存失败回滚（P6 修复）', () => {
+  it('写库失败时布局显示回滚并提示', async () => {
+    vi.mocked(setAlbumLayout).mockRejectedValueOnce(new Error('网络错误'))
+    await renderAlbumPage('albumLayout', '相册Layout', [
+      photo('p1', 0, 'albumLayout', '2025-10-01T08:00:00Z'),
+    ])
+    fireEvent.click(screen.getByRole('button', { name: '布局：圆柱墙' }))
+    fireEvent.click(screen.getByRole('button', { name: '布局：球形展厅' }))
+
+    await vi.waitFor(() => {
+      expect(screen.getByRole('button', { name: '布局：圆柱墙' })).toBeTruthy()
+    })
+  })
+})

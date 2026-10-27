@@ -20,7 +20,7 @@ function mulberry32(seed: number): () => number {
 const MIN_DISTANCE = 140
 const PAD = 90
 
-/** 散落拍立得：种子确定性散布 + 拒绝采样防重叠 + 随机角度/缩放 */
+/** 散落拍立得：种子确定性散布 + 拒绝采样防密集堆叠（拍立得允许轻微叠放）+ 随机角度/缩放 */
 export function computeScatterPlacements(
   count: number,
   width: number,

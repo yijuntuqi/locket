@@ -81,3 +81,17 @@ describe('WallScene 分发', () => {
     expect(c2.querySelectorAll('[data-testid="scatter-card"]').length).toBe(0)
   })
 })
+
+describe('复审修复（螺旋朝向/保存回滚）', () => {
+  it('螺旋墙卡片正面朝观察者（transform 无 rotateY 背向）', async () => {
+    const { SpiralWall } = await import('./SpiralWall')
+    const { container } = render(
+      <SpiralWall photos={makePhotos(6)} autoRotateDegPerSec={0} />
+    )
+    const cards = container.querySelectorAll('img:not([aria-hidden="true"])')
+    for (const img of cards) {
+      const card = img.parentElement as HTMLElement
+      expect(card.style.transform).not.toContain('rotateY')
+    }
+  })
+})
