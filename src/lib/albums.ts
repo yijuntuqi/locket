@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { isWallLayout, type WallLayout } from '@/lib/layouts'
+import { getAlbumSummary } from '@/lib/photos'
 import type { Album } from '@/lib/types'
 
 export class ValidationError extends Error {}
@@ -18,6 +19,26 @@ export async function listAlbums(): Promise<Album[]> {
     .order('created_at', { ascending: false })
   if (error) throw error
   return data as Album[]
+}
+
+export interface AlbumWithSummary extends Album {
+  coverUrl: string | null
+  photoCount: number
+}
+
+/** 相册列表 + 封面/张数摘要；单个相册摘要失败不挡列表展示（降级为无封面） */
+export async function listAlbumsWithSummaries(): Promise<AlbumWithSummary[]> {
+  const albums = await listAlbums()
+  return Promise.all(
+    albums.map(async (album) => {
+      try {
+        const { coverUrl, count } = await getAlbumSummary(album.id)
+        return { ...album, coverUrl, photoCount: count }
+      } catch {
+        return { ...album, coverUrl: null, photoCount: 0 }
+      }
+    })
+  )
 }
 
 export async function createAlbum(name: string): Promise<Album> {

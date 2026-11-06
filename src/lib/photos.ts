@@ -35,3 +35,32 @@ export async function deletePhoto(photo: Photo): Promise<void> {
   const { error } = await supabase.from('photos').delete().eq('id', photo.id)
   if (error) throw error
 }
+
+export interface AlbumSummary {
+  coverUrl: string | null
+  count: number
+}
+
+/** 相册摘要（封面 + 张数）：两次轻查询。相册数量少，N+1 可接受 */
+export async function getAlbumSummary(albumId: string): Promise<AlbumSummary> {
+  const { count, error } = await supabase
+    .from('photos')
+    .select('id', { count: 'exact', head: true })
+    .eq('album_id', albumId)
+  if (error) throw error
+  const { data: first, error: firstError } = await supabase
+    .from('photos')
+    .select('storage_path')
+    .eq('album_id', albumId)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true })
+    .limit(1)
+  if (firstError) throw firstError
+  const path = (first ?? [])[0]?.storage_path as string | undefined
+  if (!path) return { coverUrl: null, count: count ?? 0 }
+  const { data: signed, error: signError } = await supabase.storage
+    .from('photos')
+    .createSignedUrls([path], SIGN_URL_EXPIRY_SEC)
+  if (signError) throw signError
+  return { coverUrl: (signed ?? [])[0]?.signedUrl ?? null, count: count ?? 0 }
+}

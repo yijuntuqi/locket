@@ -1,37 +1,53 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type PointerEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
+import { Images, Pencil, Plus, Trash2 } from 'lucide-react'
 import { AlbumDialog } from '@/components/albums/AlbumDialog'
 import { ALBUMS_CHANGED_EVENT } from '@/components/RealtimeListener'
 import {
   createAlbum,
   deleteAlbum,
-  listAlbums,
+  listAlbumsWithSummaries,
   renameAlbum,
   ValidationError,
+  type AlbumWithSummary,
 } from '@/lib/albums'
-import { glassPanel } from '@/lib/glass'
+import { glassPanel, glassPill } from '@/lib/glass'
 import { publishAlbumEvent } from '@/lib/realtime'
 import { supabase } from '@/lib/supabase'
-import type { Album } from '@/lib/types'
 
 type DialogState =
   | { mode: 'create' }
-  | { mode: 'rename'; album: Album }
+  | { mode: 'rename'; album: AlbumWithSummary }
   | null
 
+/** 入场 stagger：70ms/张，封顶 560ms */
+function enterDelayFor(i: number): number {
+  return Math.min(i * 70, 560)
+}
+
+/** 相册封面的光标跟随眩光：位置写 CSS 变量（--gx/--gy/--go），overlay 继承消费 */
+function trackGlare(e: PointerEvent<HTMLElement>, active: boolean) {
+  const el = e.currentTarget
+  const rect = el.getBoundingClientRect()
+  if (rect.width === 0 || rect.height === 0) return
+  el.style.setProperty('--gx', `${((e.clientX - rect.left) / rect.width) * 100}%`)
+  el.style.setProperty('--gy', `${((e.clientY - rect.top) / rect.height) * 100}%`)
+  el.style.setProperty('--go', active ? '1' : '0')
+}
+
 export default function AlbumsPage() {
-  const [albums, setAlbums] = useState<Album[]>([])
+  const [albums, setAlbums] = useState<AlbumWithSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [dialog, setDialog] = useState<DialogState>(null)
   const [dialogError, setDialogError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState<Album | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<AlbumWithSummary | null>(null)
 
   const refresh = useCallback(async () => {
     try {
-      setAlbums(await listAlbums())
+      setAlbums(await listAlbumsWithSummaries())
       setLoadError(null)
     } catch (err) {
       setLoadError(err instanceof Error ? err.message : '相册加载失败')
@@ -84,7 +100,7 @@ export default function AlbumsPage() {
     }
   }
 
-  async function handleDelete(album: Album) {
+  async function handleDelete(album: AlbumWithSummary) {
     setPending(true)
     try {
       await deleteAlbum(album)
@@ -106,16 +122,22 @@ export default function AlbumsPage() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="mx-auto max-w-3xl px-6 py-10">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-white">我的相册</h1>
+      <div className="mx-auto max-w-4xl px-6 py-12">
+        <div className="mb-8 flex items-end justify-between">
+          <div>
+            <h1 className="font-display-gradient font-display text-4xl font-black tracking-wide">
+              我的相册
+            </h1>
+            <p className="mt-1 text-sm text-white/50">把回忆装进吊坠盒</p>
+          </div>
           <button
             onClick={() => {
               setDialogError(null)
               setDialog({ mode: 'create' })
             }}
-            className="rounded-md bg-white px-3 py-2 text-sm font-medium text-slate-900"
+            className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/20 ${glassPill}`}
           >
+            <Plus className="h-4 w-4" aria-hidden />
             新建相册
           </button>
         </div>
@@ -123,34 +145,82 @@ export default function AlbumsPage() {
         {loadError && <p className="mb-4 text-sm text-red-400">{loadError}</p>}
 
         {albums.length === 0 && !loadError ? (
-          <p className="text-white/50">还没有相册，点右上角新建一个吧</p>
+          <div className="flex flex-col items-center gap-4 py-24 text-center">
+            <Images className="h-10 w-10 text-white/25" aria-hidden />
+            <p className="font-display text-2xl font-semibold text-white/80">还没有相册</p>
+            <p className="text-sm text-white/50">建第一个相册，装进你们的照片</p>
+          </div>
         ) : (
-          <ul className="grid grid-cols-2 gap-4 md:grid-cols-3">
-            {albums.map((album) => (
-              <li key={album.id} className={`p-4 transition-colors hover:bg-white/10 ${glassPanel}`}>
-                <Link
-                  to={`/album/${album.id}`}
-                  className="block text-lg font-medium text-white hover:underline"
+          <ul className="grid grid-cols-2 gap-5 md:grid-cols-3">
+            {albums.map((album, i) => (
+              <li
+                key={album.id}
+                data-testid="page-enter"
+                style={{
+                  animation: 'fade-blur-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both',
+                  animationDelay: `${enterDelayFor(i)}ms`,
+                }}
+              >
+                <div
+                  className={`group relative overflow-hidden transition-[transform,border-color,box-shadow] duration-300 hover:-translate-y-1 hover:border-white/25 hover:shadow-[0_20px_50px_rgba(0,0,0,0.45)] ${glassPanel}`}
+                  onPointerMove={(e) => trackGlare(e, true)}
+                  onPointerLeave={(e) => trackGlare(e, false)}
                 >
-                  {album.name}
-                </Link>
-                <div className="mt-3 flex gap-2">
-                  <button
-                    onClick={() => {
-                      setDialogError(null)
-                      setDialog({ mode: 'rename', album })
+                  {/* 光标跟随眩光（位置走 CSS 变量继承） */}
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 z-10 opacity-[var(--go,0)] mix-blend-screen transition-opacity duration-300"
+                    style={{
+                      background:
+                        'radial-gradient(180px circle at var(--gx, 50%) var(--gy, 50%), rgba(255,255,255,0.18), transparent 70%)',
                     }}
-                    className="text-sm text-white/60 hover:text-white"
-                  >
-                    重命名
-                  </button>
-                  <button
-                    onClick={() => setConfirmDelete(album)}
-                    disabled={pending}
-                    className="text-sm text-red-400/80 hover:text-red-300 disabled:opacity-50"
-                  >
-                    删除
-                  </button>
+                  />
+                  <Link to={`/album/${album.id}`} className="block" aria-label={`打开相册 ${album.name}`}>
+                    <div className="relative aspect-[3/4] bg-gradient-to-br from-indigo-950/60 via-slate-900/40 to-slate-950">
+                      {album.coverUrl ? (
+                        <img
+                          src={album.coverUrl}
+                          alt=""
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <Images className="h-9 w-9 text-white/15" aria-hidden />
+                        </div>
+                      )}
+                      {/* 底部渐隐把名字托出来 */}
+                      <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/70 to-transparent" />
+                      <div className="absolute inset-x-0 bottom-0 p-4">
+                        <h2 className="font-display text-xl font-bold text-white">
+                          {album.name}
+                        </h2>
+                        <p className="mt-0.5 text-xs text-white/60">
+                          {album.photoCount} 张照片
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                  <div className="flex items-center justify-end gap-1 px-3 py-2">
+                    <button
+                      onClick={() => {
+                        setDialogError(null)
+                        setDialog({ mode: 'rename', album })
+                      }}
+                      className="flex items-center gap-1 rounded-full px-2 py-1 text-xs text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+                    >
+                      <Pencil className="h-3.5 w-3.5" aria-hidden />
+                      重命名
+                    </button>
+                    <button
+                      onClick={() => setConfirmDelete(album)}
+                      disabled={pending}
+                      className="flex items-center gap-1 rounded-full px-2 py-1 text-xs text-red-300/70 transition-colors hover:bg-red-500/20 hover:text-red-300 disabled:opacity-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                      删除
+                    </button>
+                  </div>
                 </div>
               </li>
             ))}
@@ -171,11 +241,13 @@ export default function AlbumsPage() {
 
       {confirmDelete && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
           onClick={() => setConfirmDelete(null)}
         >
           <div
+            data-testid="dialog-panel"
             className={`w-72 space-y-4 p-5 ${glassPanel}`}
+            style={{ animation: 'pop-in 0.25s cubic-bezier(0.22, 1, 0.36, 1) both' }}
             onClick={(e) => e.stopPropagation()}
           >
             <p className="text-white">

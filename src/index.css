@@ -196,6 +196,7 @@
   [data-testid='wall-card-enter'],
   [data-testid='page-enter'],
   [data-testid='dialog-panel'],
+  [data-testid='layout-menu'],
   [data-testid='starfield-twinkle'],
   [data-testid='drift-column'] {
     animation: none !important;

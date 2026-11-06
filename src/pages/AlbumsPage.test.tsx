@@ -3,24 +3,24 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import AlbumsPage from './AlbumsPage'
-import type { Album } from '@/lib/types'
+import type { AlbumWithSummary } from '@/lib/albums'
 
 const mocks = vi.hoisted(() => ({
-  listAlbums: vi.fn(),
+  listAlbumsWithSummaries: vi.fn(),
   createAlbum: vi.fn(),
   renameAlbum: vi.fn(),
   deleteAlbum: vi.fn(),
 }))
 
 vi.mock('@/lib/albums', () => ({
-  listAlbums: mocks.listAlbums,
+  listAlbumsWithSummaries: mocks.listAlbumsWithSummaries,
   createAlbum: mocks.createAlbum,
   renameAlbum: mocks.renameAlbum,
   deleteAlbum: mocks.deleteAlbum,
   ValidationError: class ValidationError extends Error {},
 }))
 
-const sampleAlbums: Album[] = [
+const sampleAlbums: AlbumWithSummary[] = [
   {
     id: 'a1',
     owner_id: 'u1',
@@ -28,6 +28,8 @@ const sampleAlbums: Album[] = [
     allow_collab_upload: false,
     wall_layout: 'cylinder',
     created_at: '2026-10-27T00:00:00Z',
+    coverUrl: 'https://signed/cover-a1',
+    photoCount: 3,
   },
   {
     id: 'a2',
@@ -36,6 +38,8 @@ const sampleAlbums: Album[] = [
     allow_collab_upload: false,
     wall_layout: 'cylinder',
     created_at: '2026-10-27T01:00:00Z',
+    coverUrl: null,
+    photoCount: 0,
   },
 ]
 
@@ -50,7 +54,7 @@ function renderPage() {
 describe('AlbumsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.listAlbums.mockResolvedValue(sampleAlbums)
+    mocks.listAlbumsWithSummaries.mockResolvedValue(sampleAlbums)
   })
 
   afterEach(cleanup)
@@ -62,7 +66,7 @@ describe('AlbumsPage', () => {
   })
 
   it('空相册显示空状态提示', async () => {
-    mocks.listAlbums.mockResolvedValue([])
+    mocks.listAlbumsWithSummaries.mockResolvedValue([])
     renderPage()
     expect(await screen.findByText(/还没有相册/)).toBeTruthy()
   })
