@@ -1,4 +1,5 @@
 import { PhotoWall } from '@/components/PhotoWall'
+import { DriftWall } from '@/components/wall/DriftWall'
 import { ScatterWall } from '@/components/wall/ScatterWall'
 import { SphereWall } from '@/components/wall/SphereWall'
 import { SpiralWall } from '@/components/wall/SpiralWall'
@@ -22,6 +23,9 @@ export function WallScene({ layout, photos, autoRotateDegPerSec, onDeletePhoto }
       return <ScatterWall {...common} />
     case 'spiral':
       return <SpiralWall {...common} />
+    case 'drift':
+      // 漂移墙自带恒定漂移，不吃 autoRotate 参数
+      return <DriftWall photos={photos} onDeletePhoto={onDeletePhoto} />
     default:
       return <PhotoWall {...common} />
   }

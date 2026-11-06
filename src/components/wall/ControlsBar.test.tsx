@@ -55,4 +55,19 @@ describe('ControlsBar', () => {
     expect((getByRole('button', { name: '布局：圆柱墙' }) as HTMLButtonElement).disabled).toBe(true)
     expect((getByRole('button', { name: '自动旋转' }) as HTMLButtonElement).disabled).toBe(true)
   })
+
+  it('autoRotateDisabled 只置灰自动旋转（漂移墙恒漂移），布局仍可选', () => {
+    const { getByRole } = render(
+      <ControlsBar
+        currentLayout="drift"
+        onLayoutChange={() => undefined}
+        autoRotate
+        onToggleAutoRotate={() => undefined}
+        disabled={false}
+        autoRotateDisabled
+      />
+    )
+    expect((getByRole('button', { name: '自动旋转' }) as HTMLButtonElement).disabled).toBe(true)
+    expect((getByRole('button', { name: '布局：漂移墙' }) as HTMLButtonElement).disabled).toBe(false)
+  })
 })

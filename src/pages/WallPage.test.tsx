@@ -253,6 +253,21 @@ describe('WallPage 布局持久化（P6）', () => {
     await screen.findAllByText('相册Layout2')
     expect(screen.getByRole('button', { name: '布局：螺旋隧道' })).toBeTruthy()
   })
+
+  it('切到漂移墙后自动旋转开关置灰（恒漂移）', async () => {
+    await renderAlbumPage('albumDrift', '相册Drift', [
+      photo('p1', 0, 'albumDrift', '2025-10-01T08:00:00Z'),
+    ])
+    fireEvent.click(screen.getByRole('button', { name: '布局：圆柱墙' }))
+    fireEvent.click(screen.getByRole('button', { name: '布局：漂移墙' }))
+
+    await vi.waitFor(() => {
+      expect(setAlbumLayout).toHaveBeenCalledWith('albumDrift', 'drift')
+    })
+    expect((screen.getByRole('button', { name: '自动旋转' }) as HTMLButtonElement).disabled).toBe(
+      true
+    )
+  })
 })
 
 describe('WallPage 场景大标题（P7）', () => {

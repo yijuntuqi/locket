@@ -200,6 +200,20 @@
   [data-testid='drift-column'] {
     animation: none !important;
   }
+  .drift-tile {
+    transition: none !important;
+  }
+  .drift-tile:hover {
+    transform: none !important;
+  }
+}
+
+/* 漂移墙瓦片：hover 浮起（translateZ 在 3D 链路上，reduced-motion 下禁用） */
+.drift-tile {
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.drift-tile:hover {
+  transform: translateZ(56px);
 }
 
 @keyframes float-drift {

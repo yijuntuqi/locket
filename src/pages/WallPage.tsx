@@ -210,6 +210,7 @@ export default function WallPage() {
         autoRotate={autoRotate}
         onToggleAutoRotate={() => setAutoRotate((prev) => !prev)}
         disabled={wallItems.length === 0}
+        autoRotateDisabled={layout === 'drift'}
       />
     </div>
   )

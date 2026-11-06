@@ -1,11 +1,12 @@
 /** 照片墙布局市场：新增布局在此注册（id 与 DB wall_layout 白名单一致） */
-export type WallLayout = 'cylinder' | 'sphere' | 'scatter' | 'spiral'
+export type WallLayout = 'cylinder' | 'sphere' | 'scatter' | 'spiral' | 'drift'
 
 export const WALL_LAYOUTS: { id: WallLayout; label: string }[] = [
   { id: 'cylinder', label: '圆柱墙' },
   { id: 'sphere', label: '球形展厅' },
   { id: 'scatter', label: '散落拍立得' },
   { id: 'spiral', label: '螺旋隧道' },
+  { id: 'drift', label: '漂移墙' },
 ]
 
 export const DEFAULT_LAYOUT: WallLayout = 'cylinder'

@@ -8,6 +8,8 @@ interface ControlsBarProps {
   autoRotate: boolean
   onToggleAutoRotate: () => void
   disabled: boolean
+  /** 漂移墙恒定漂移，自动旋转开关无意义时置灰 */
+  autoRotateDisabled?: boolean
 }
 
 /** 右缘常驻控制条：布局选择 + 自动旋转（垂直 pill，不遮挡中央照片区） */
@@ -17,6 +19,7 @@ export function ControlsBar({
   autoRotate,
   onToggleAutoRotate,
   disabled,
+  autoRotateDisabled = false,
 }: ControlsBarProps) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -63,7 +66,7 @@ export function ControlsBar({
         <button
           type="button"
           aria-pressed={autoRotate}
-          disabled={disabled}
+          disabled={disabled || autoRotateDisabled}
           onClick={onToggleAutoRotate}
           className={`rounded-full px-2 py-1.5 text-xs transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40 ${
             autoRotate ? 'bg-white/20 text-white' : 'text-white/60 hover:text-white'
