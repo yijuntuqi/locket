@@ -148,7 +148,7 @@ describe('自动旋转开关', () => {
 })
 
 describe('hover 景深（DoF）', () => {
-  it('hover 某卡片：其浮出 translateZ，其余卡片叶子 img 模糊，容器 preserve-3d 不破', () => {
+  it('hover 某卡片：其浮出 translateZ，其余卡片相框模糊，容器 preserve-3d 不破', () => {
     const { container } = render(
       <PhotoWall photos={[makePhoto(0), makePhoto(1), makePhoto(2)]} />
     )
@@ -158,17 +158,19 @@ describe('hover 景深（DoF）', () => {
     fireEvent.pointerEnter(cards[1], { buttons: 0 })
     expect((cards[1] as HTMLElement).style.transform).toContain('translateZ(48px)')
 
-    const frontImg0 = cards[0].querySelector('img:not([aria-hidden="true"])') as HTMLElement
-    expect(frontImg0.style.filter).toContain('blur(3px)')
-    const frontImg1 = cards[1].querySelector('img:not([aria-hidden="true"])') as HTMLElement
-    expect(frontImg1.style.filter).toBe('')
+    const frontFrame0 = cards[0].querySelector('[data-testid="card-frame-front"]') as HTMLElement
+    expect(frontFrame0.style.filter).toContain('blur(3px)')
+    const frontFrame1 = cards[1].querySelector('[data-testid="card-frame-front"]') as HTMLElement
+    expect(frontFrame1.style.filter).toBe('')
 
-    // 卡片容器 transformStyle 仍 preserve-3d（blur 只加叶子上）
+    // 卡片容器 transformStyle 仍 preserve-3d（blur 只加在 2D 相框子树上）
     expect((cards[0] as HTMLElement).style.transformStyle).toBe('preserve-3d')
 
     fireEvent.pointerLeave(cards[1])
     expect((cards[1] as HTMLElement).style.transform).not.toContain('translateZ(48px)')
-    expect((cards[0].querySelector('img:not([aria-hidden="true"])') as HTMLElement).style.filter).toBe('')
+    expect(
+      (cards[0].querySelector('[data-testid="card-frame-front"]') as HTMLElement).style.filter
+    ).toBe('')
   })
 
   it('按住按键（拖拽中）时 hover 不触发景深', () => {
@@ -176,7 +178,9 @@ describe('hover 景深（DoF）', () => {
     const cards = container.querySelectorAll('.group')
     fireEvent.pointerEnter(cards[1], { buttons: 1 })
     expect((cards[1] as HTMLElement).style.transform).not.toContain('translateZ(48px)')
-    expect((cards[0].querySelector('img:not([aria-hidden="true"])') as HTMLElement).style.filter).toBe('')
+    expect(
+      (cards[0].querySelector('[data-testid="card-frame-front"]') as HTMLElement).style.filter
+    ).toBe('')
   })
 })
 

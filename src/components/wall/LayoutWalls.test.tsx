@@ -88,10 +88,10 @@ describe('复审修复（螺旋朝向/保存回滚）', () => {
     const { container } = render(
       <SpiralWall photos={makePhotos(6)} autoRotateDegPerSec={0} />
     )
-    const cards = container.querySelectorAll('img:not([aria-hidden="true"])')
-    for (const img of cards) {
-      const card = img.parentElement as HTMLElement
-      expect(card.style.transform).not.toContain('rotateY')
+    const cards = container.querySelectorAll('[data-testid="wall-card"]')
+    expect(cards.length).toBe(6)
+    for (const card of cards) {
+      expect((card as HTMLElement).style.transform).not.toContain('rotateY')
     }
   })
 })

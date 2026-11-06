@@ -1,4 +1,5 @@
 import { memo, type CSSProperties } from 'react'
+import { X } from 'lucide-react'
 import { CardFaces } from '@/components/wall/CardFaces'
 import type { FakePhoto } from '@/lib/fakePhotos'
 
@@ -15,7 +16,12 @@ interface WallCardProps {
   onDelete?: (id: string) => void
 }
 
-/** 各布局通用的照片卡片：3D 定位外壳 + 双面反光内容 + 删除按钮 + hover 聚焦 */
+/** 画廊细框白边：随卡片宽度缩放，6px 封顶 */
+function framePadFor(widthPx: number): number {
+  return Math.min(6, Math.max(2, widthPx * 0.045))
+}
+
+/** 各布局通用的照片卡片：3D 定位外壳 + 画廊细框双面 + 眩光 + 删除按钮 + hover 聚焦 */
 export const WallCard = memo(function WallCard({
   photo,
   transform,
@@ -38,7 +44,8 @@ export const WallCard = memo(function WallCard({
   const handleDelete = onDelete ? () => onDelete(photo.id) : undefined
   return (
     <div
-      className="absolute left-1/2 top-1/2"
+      data-testid="wall-card"
+      className="group absolute left-1/2 top-1/2"
       style={style}
       onPointerEnter={(e) => {
         if (e.buttons === 0) onHoverChange(photo.id, true)
@@ -48,6 +55,7 @@ export const WallCard = memo(function WallCard({
       <CardFaces
         photo={photo}
         dimmed={anyFocused && !focused}
+        framePadPx={framePadFor(widthPx)}
         sheenDelayMs={sheenDelayMs}
         onFrontContextMenu={
           handleDelete
@@ -66,10 +74,10 @@ export const WallCard = memo(function WallCard({
             e.stopPropagation()
             handleDelete()
           }}
-          className="absolute right-1 top-1 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-sm text-white opacity-0 transition-opacity hover:bg-red-500/80 focus:opacity-100 group-hover:opacity-100"
+          className="absolute right-1 top-1 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition-opacity hover:bg-red-500/80 focus:opacity-100 group-hover:opacity-100"
           style={{ backfaceVisibility: 'hidden', transform: 'translateZ(1px)' }}
         >
-          ✕
+          <X className="h-4 w-4" aria-hidden />
         </button>
       )}
     </div>
