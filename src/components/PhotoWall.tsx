@@ -84,7 +84,7 @@ export function PhotoWall({
             focused={photo.id === focusedId}
             anyFocused={anyFocused}
             onHoverChange={handleHoverChange}
-            sheenDelayMs={i * 220}
+            index={i}
             onDelete={onDeletePhoto}
           />
         ))}

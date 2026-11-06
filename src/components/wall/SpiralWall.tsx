@@ -68,7 +68,7 @@ export function SpiralWall({ photos, autoRotateDegPerSec, onDeletePhoto }: Spira
               focused={focused}
               anyFocused={anyFocused}
               onHoverChange={handleHoverChange}
-              sheenDelayMs={i * 220}
+              index={i}
               onDelete={onDeletePhoto}
             />
           )

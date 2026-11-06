@@ -5,6 +5,8 @@ import type { FakePhoto } from '@/lib/fakePhotos'
 
 interface WallCardProps {
   photo: FakePhoto
+  /** 照片在墙内的序号：派生扫光错峰（i*220ms）与入场错峰（i*45ms，封顶 900ms） */
+  index: number
   /** 定位 + 朝向 + 聚焦浮出的完整 transform（含 translate(-50%,-50%) 前缀） */
   transform: string
   widthPx: number
@@ -12,7 +14,6 @@ interface WallCardProps {
   focused: boolean
   anyFocused: boolean
   onHoverChange: (id: string, active: boolean) => void
-  sheenDelayMs: number
   onDelete?: (id: string) => void
 }
 
@@ -21,16 +22,21 @@ function framePadFor(widthPx: number): number {
   return Math.min(6, Math.max(2, widthPx * 0.045))
 }
 
-/** 各布局通用的照片卡片：3D 定位外壳 + 画廊细框双面 + 眩光 + 删除按钮 + hover 聚焦 */
+/** 入场 stagger：45ms/张、封顶 900ms，全场总时长 ≤ 1.6s */
+export function enterDelayFor(index: number): number {
+  return Math.min(index * 45, 900)
+}
+
+/** 各布局通用的照片卡片：3D 定位外壳 + 入场浮现 + 画廊细框双面 + 眩光 + 删除按钮 + hover 聚焦 */
 export const WallCard = memo(function WallCard({
   photo,
+  index,
   transform,
   widthPx,
   transition,
   focused,
   anyFocused,
   onHoverChange,
-  sheenDelayMs,
   onDelete,
 }: WallCardProps) {
   const style: CSSProperties = {
@@ -52,34 +58,44 @@ export const WallCard = memo(function WallCard({
       }}
       onPointerLeave={() => onHoverChange(photo.id, false)}
     >
-      <CardFaces
-        photo={photo}
-        dimmed={anyFocused && !focused}
-        framePadPx={framePadFor(widthPx)}
-        sheenDelayMs={sheenDelayMs}
-        onFrontContextMenu={
-          handleDelete
-            ? (e) => {
-                e.preventDefault()
-                handleDelete()
-              }
-            : undefined
-        }
-      />
-      {handleDelete && (
-        <button
-          type="button"
-          aria-label={`删除 ${photo.caption}`}
-          onClick={(e) => {
-            e.stopPropagation()
-            handleDelete()
-          }}
-          className="absolute right-1 top-1 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition-opacity hover:bg-red-500/80 focus:opacity-100 group-hover:opacity-100"
-          style={{ backfaceVisibility: 'hidden', transform: 'translateZ(1px)' }}
-        >
-          <X className="h-4 w-4" aria-hidden />
-        </button>
-      )}
+      {/* 入场浮现层：只碰 opacity/transform，保持 preserve-3d；reduced-motion 下由全局规则关闭 */}
+      <div
+        data-testid="wall-card-enter"
+        style={{
+          transformStyle: 'preserve-3d',
+          animation: 'rise-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both',
+          animationDelay: `${enterDelayFor(index)}ms`,
+        }}
+      >
+        <CardFaces
+          photo={photo}
+          dimmed={anyFocused && !focused}
+          framePadPx={framePadFor(widthPx)}
+          sheenDelayMs={index * 220}
+          onFrontContextMenu={
+            handleDelete
+              ? (e) => {
+                  e.preventDefault()
+                  handleDelete()
+                }
+              : undefined
+          }
+        />
+        {handleDelete && (
+          <button
+            type="button"
+            aria-label={`删除 ${photo.caption}`}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleDelete()
+            }}
+            className="absolute right-1 top-1 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/70 text-white opacity-0 transition-opacity hover:bg-red-500/80 focus:opacity-100 group-hover:opacity-100"
+            style={{ backfaceVisibility: 'hidden', transform: 'translateZ(1px)' }}
+          >
+            <X className="h-4 w-4" aria-hidden />
+          </button>
+        )}
+      </div>
     </div>
   )
 })

@@ -38,6 +38,19 @@ describe('SphereWall', () => {
     expect((container.firstElementChild as HTMLElement).style.perspective).toBe('1200px')
     expect(container.querySelector('[data-testid="wall-drag-surface"]')).toBeTruthy()
   })
+
+  it('入场浮现层按序号错峰（45ms/张，封顶 900ms）', async () => {
+    const { SphereWall } = await import('./SphereWall')
+    const { container } = render(
+      <SphereWall photos={makePhotos(3)} autoRotateDegPerSec={0} />
+    )
+    const enters = container.querySelectorAll('[data-testid="wall-card-enter"]')
+    expect(enters.length).toBe(3)
+    expect((enters[0] as HTMLElement).style.animationDelay).toBe('0ms')
+    expect((enters[1] as HTMLElement).style.animationDelay).toBe('45ms')
+    expect((enters[2] as HTMLElement).style.animationDelay).toBe('90ms')
+    expect((enters[0] as HTMLElement).style.animation).toContain('rise-in')
+  })
 })
 
 describe('ScatterWall', () => {

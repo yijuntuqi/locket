@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
+import { Images } from 'lucide-react'
 import { ALBUM_UPDATED_EVENT } from '@/components/RealtimeListener'
 import { ControlsBar } from '@/components/wall/ControlsBar'
 import { WallScene } from '@/components/wall/WallScene'
 import { EdgeReveal } from '@/components/wall/EdgeReveal'
 import { DustMotes, SceneLight } from '@/components/wall/SceneAtmosphere'
+import { SceneTitle } from '@/components/wall/SceneTitle'
 import { UploadButton } from '@/components/wall/UploadButton'
 import type { FakePhoto } from '@/lib/fakePhotos'
 import { glassPill } from '@/lib/glass'
@@ -182,11 +184,17 @@ export default function WallPage() {
       )}
 
       {wallItems.length === 0 ? (
-        <div className="flex h-full items-center justify-center text-white/50">
-          这个相册还没有照片，点右上角上传吧
+        <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+          <Images className="h-10 w-10 text-white/25" aria-hidden />
+          <p className="font-display text-2xl font-semibold text-white/80">
+            这个相册还没有照片
+          </p>
+          <p className="text-sm text-white/50">传几张进来，让墙上有点回忆</p>
+          <UploadButton pending={uploading} onFiles={(fs) => void handleUpload(fs)} />
         </div>
       ) : (
         <div className="h-full">
+          <SceneTitle name={album.name} photoCount={wallItems.length} />
           <WallScene
             layout={layout}
             photos={wallItems}

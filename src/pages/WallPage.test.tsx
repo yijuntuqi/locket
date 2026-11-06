@@ -64,7 +64,7 @@ vi.mock('@/lib/albums', async (importOriginal) => {
   }
 })
 
-vi.mock('sonner', () => ({ toast: { success: vi.fn() } }))
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
 function photo(id: string, sortOrder: number, albumId: string, createdAt = ''): PhotoWithUrl {
   return {
@@ -112,7 +112,8 @@ async function renderAlbumPage(albumId: string, name: string, photos: PhotoWithU
     await new Promise((r) => setTimeout(r, 0))
   })
   photoDef[albumId].resolve(photos)
-  await screen.findByText(name)
+  // 相册名同时出现在顶栏 pill 与场景大标题（有照片时），断言至少一处渲染即可
+  await screen.findAllByText(name)
 }
 
 
@@ -143,7 +144,7 @@ describe('WallPage 路由参数切换竞态', () => {
       await new Promise((r) => setTimeout(r, 0))
     })
     photoDef.albumB.resolve([photo('pb1', 0, 'albumB'), photo('pb2', 1, 'albumB')])
-    expect(await screen.findByText('相册B')).toBeTruthy()
+    expect((await screen.findAllByText('相册B')).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByAltText(/照片 /)).toHaveLength(2)
 
     // A 的慢响应现在才到：不得覆盖 B
@@ -160,7 +161,7 @@ describe('WallPage 路由参数切换竞态', () => {
     await act(async () => {
       await new Promise((r) => setTimeout(r, 50))
     })
-    expect(screen.getByText('相册B')).toBeTruthy()
+    expect(screen.getAllByText('相册B').length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByAltText(/照片 /)).toHaveLength(2)
   })
 })
@@ -249,8 +250,27 @@ describe('WallPage 布局持久化（P6）', () => {
       await new Promise((r) => setTimeout(r, 0))
     })
     photoDef.albumLayout2.resolve(PHOTOS.map((p) => ({ ...p, album_id: 'albumLayout2' })))
-    await screen.findByText('相册Layout2')
+    await screen.findAllByText('相册Layout2')
     expect(screen.getByRole('button', { name: '布局：螺旋隧道' })).toBeTruthy()
+  })
+})
+
+describe('WallPage 场景大标题（P7）', () => {
+  it('有照片时渲染相册名大标题与张数', async () => {
+    await renderAlbumPage('albumTitle', '旅行日记', [
+      photo('p1', 0, 'albumTitle'),
+      photo('p2', 1, 'albumTitle'),
+    ])
+    const title = screen.getByTestId('scene-title')
+    expect(title.textContent).toContain('旅行日记')
+    expect(title.textContent).toContain('2 张照片')
+  })
+
+  it('空相册显示引导空状态与上传入口', async () => {
+    await renderAlbumPage('albumEmpty2', '空相册2', [])
+    expect(screen.getByText('这个相册还没有照片')).toBeTruthy()
+    // 空状态内的上传按钮可达（顶栏那个折叠时在可访问性树外，与既有测试约定一致）
+    expect(screen.getAllByRole('button', { name: '上传照片' }).length).toBe(1)
   })
 })
 

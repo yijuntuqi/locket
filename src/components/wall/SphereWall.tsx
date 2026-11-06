@@ -67,7 +67,7 @@ export function SphereWall({ photos, autoRotateDegPerSec, onDeletePhoto }: Spher
               focused={focused}
               anyFocused={anyFocused}
               onHoverChange={handleHoverChange}
-              sheenDelayMs={i * 220}
+              index={i}
               onDelete={onDeletePhoto}
             />
           )

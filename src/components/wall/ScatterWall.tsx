@@ -75,7 +75,7 @@ export function ScatterWall({ photos, autoRotateDegPerSec, onDeletePhoto }: Scat
                 focused={focused}
                 anyFocused={anyFocused}
                 onHoverChange={handleHoverChange}
-                sheenDelayMs={i * 220}
+                index={i}
                 onDelete={onDeletePhoto}
               />
             </div>
