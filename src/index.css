@@ -60,6 +60,13 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  /* P7 排版体系：Geist 走界面正文，思源宋体走大标题 */
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-display: 'Noto Serif SC Variable', 'Songti SC', 'SimSun', serif;
+  /* P7 品牌色：void 是全站深空底色基准，gilt 是香槟金强调（标题渐变、高亮） */
+  --color-void: #05060f;
+  --color-gilt: #e8c98a;
+  --color-gilt-deep: #b8935a;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -95,6 +102,64 @@
   }
 }
 
+@layer utilities {
+  /* 大标题专用：白→香槟金的垂直微渐变文字 */
+  .font-display-gradient {
+    background-image: linear-gradient(175deg, #ffffff 30%, #e8c98a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.65;
+  }
+}
+
+/* 场景入场：照片从纵深处浮现（只碰 opacity/transform，不压塌 preserve-3d） */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateZ(-96px);
+  }
+  to {
+    opacity: 1;
+    transform: translateZ(0);
+  }
+}
+
+/* 2D 页面（相册列表、弹窗）入场：模糊中显影 */
+@keyframes fade-blur-in {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+/* 弹窗入场：轻缩放 */
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 @keyframes sheen {
   0% {
     background-position: 130% 0;
@@ -125,8 +190,14 @@
 
 @media (prefers-reduced-motion: reduce) {
   [data-testid='card-sheen'],
+  [data-testid='card-glare'],
   [data-testid='dust-mote'],
-  [data-testid='scatter-card'] {
+  [data-testid='scatter-card'],
+  [data-testid='wall-card-enter'],
+  [data-testid='page-enter'],
+  [data-testid='dialog-panel'],
+  [data-testid='starfield-twinkle'],
+  [data-testid='drift-column'] {
     animation: none !important;
   }
 }

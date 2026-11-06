@@ -14,32 +14,47 @@ function mulberry32(seed: number): () => number {
   }
 }
 
-function starfieldStyle(): CSSProperties {
+/** 每层星空独立成 div，用不同周期的 twinkle 制造错峰闪烁 */
+function starfieldLayerStyle(layer: number): CSSProperties {
   const rand = mulberry32(7)
-  const layers: string[] = []
-  for (let layer = 0; layer < 3; layer++) {
-    const count = 40 + layer * 20
-    const size = 1 + layer * 0.5
-    const alpha = 0.5 - layer * 0.12
-    for (let i = 0; i < count; i++) {
-      const x = Math.round(rand() * 1000) / 10
-      const y = Math.round(rand() * 1000) / 10
-      layers.push(
-        `radial-gradient(${size}px ${size}px at ${x}% ${y}%, rgba(255,255,255,${alpha}), transparent 70%)`
-      )
+  // 先消费掉前几层的随机数，保持与旧版同种子同序列，星点位置不变
+  for (let prev = 0; prev < layer; prev++) {
+    const prevCount = 40 + prev * 20
+    for (let i = 0; i < prevCount; i++) {
+      rand()
+      rand()
     }
   }
-  return { backgroundImage: layers.join(',') }
+  const count = 40 + layer * 20
+  const size = 1 + layer * 0.5
+  const alpha = 0.5 - layer * 0.12
+  const stars: string[] = []
+  for (let i = 0; i < count; i++) {
+    const x = Math.round(rand() * 1000) / 10
+    const y = Math.round(rand() * 1000) / 10
+    stars.push(
+      `radial-gradient(${size}px ${size}px at ${x}% ${y}%, rgba(255,255,255,${alpha}), transparent 70%)`
+    )
+  }
+  const durations = [9, 12, 15]
+  return {
+    backgroundImage: stars.join(','),
+    animation: `twinkle ${durations[layer]}s ease-in-out infinite alternate`,
+  }
 }
 
 function Starfield() {
   return (
-    <div
-      data-testid="starfield"
-      aria-hidden
-      className="pointer-events-none absolute inset-0"
-      style={starfieldStyle()}
-    />
+    <div data-testid="starfield" aria-hidden className="pointer-events-none absolute inset-0">
+      {[0, 1, 2].map((layer) => (
+        <div
+          key={layer}
+          data-testid="starfield-twinkle"
+          className="absolute inset-0"
+          style={starfieldLayerStyle(layer)}
+        />
+      ))}
+    </div>
   )
 }
 
