@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState, type PointerEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
-import { Images, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Images, Pencil, Plus, Share2, Trash2 } from 'lucide-react'
 import { AlbumDialog } from '@/components/albums/AlbumDialog'
+import { ShareDialog } from '@/components/albums/ShareDialog'
 import { ALBUMS_CHANGED_EVENT } from '@/components/RealtimeListener'
 import {
   createAlbum,
@@ -44,6 +45,7 @@ export default function AlbumsPage() {
   const [dialogError, setDialogError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<AlbumWithSummary | null>(null)
+  const [shareAlbum, setShareAlbum] = useState<AlbumWithSummary | null>(null)
 
   const refresh = useCallback(async () => {
     try {
@@ -203,6 +205,13 @@ export default function AlbumsPage() {
                   </Link>
                   <div className="flex items-center justify-end gap-1 px-3 py-2">
                     <button
+                      onClick={() => setShareAlbum(album)}
+                      className="flex items-center gap-1 rounded-full px-2 py-1 text-xs text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+                    >
+                      <Share2 className="h-3.5 w-3.5" aria-hidden />
+                      分享
+                    </button>
+                    <button
                       onClick={() => {
                         setDialogError(null)
                         setDialog({ mode: 'rename', album })
@@ -236,6 +245,14 @@ export default function AlbumsPage() {
           error={dialogError}
           onSubmit={(name) => void handleSubmit(name)}
           onClose={() => setDialog(null)}
+        />
+      )}
+
+      {shareAlbum && (
+        <ShareDialog
+          album={shareAlbum}
+          onChanged={() => void refresh()}
+          onClose={() => setShareAlbum(null)}
         />
       )}
 

@@ -138,6 +138,7 @@ describe('deleteAlbum', () => {
       owner_id: 'u1',
       name: '日常',
       allow_collab_upload: false,
+      share_code: null,
       wall_layout: 'cylinder',
       created_at: '',
     })
@@ -174,6 +175,7 @@ describe('listAlbumsWithSummaries', () => {
         owner_id: 'u1',
         name: '旅行',
         allow_collab_upload: false,
+        share_code: null,
         wall_layout: 'cylinder',
         created_at: '',
       },
@@ -182,6 +184,7 @@ describe('listAlbumsWithSummaries', () => {
         owner_id: 'u1',
         name: '日常',
         allow_collab_upload: false,
+        share_code: null,
         wall_layout: 'cylinder',
         created_at: '',
       },

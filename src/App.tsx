@@ -30,6 +30,8 @@ export default function App() {
               </RequireAuth>
             }
           />
+          {/* 分享访客墙：凭 /s/{code} 免登录查看，无 RequireAuth */}
+          <Route path="/s/:code" element={<WallPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

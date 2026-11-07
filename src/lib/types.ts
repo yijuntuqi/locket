@@ -5,6 +5,8 @@ export interface Album {
   owner_id: string
   name: string
   allow_collab_upload: boolean
+  /** 分享码：非空即「有链接者可见」，/s/{share_code} 免登录访问 */
+  share_code: string | null
   wall_layout: WallLayout
   created_at: string
 }

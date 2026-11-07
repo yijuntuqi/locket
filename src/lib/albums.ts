@@ -74,6 +74,43 @@ export async function setAlbumLayout(id: string, layout: WallLayout): Promise<vo
   if (error) throw error
 }
 
+/** 分享码字母表：去掉 0/o/1/i/l 等易混淆字符；32 恰好整除 256，无取模偏差 */
+const SHARE_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789'
+
+function generateShareCode(length = 12): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(length))
+  return Array.from(bytes, (b) => SHARE_ALPHABET[b % SHARE_ALPHABET.length]).join('')
+}
+
+/** 开/关链接分享：开启生成 12 位分享码（唯一约束冲突重试），关闭置 null 即撤回链接 */
+export async function setAlbumSharing(id: string, shared: boolean): Promise<string | null> {
+  if (!shared) {
+    const { error } = await supabase.from('albums').update({ share_code: null }).eq('id', id)
+    if (error) throw error
+    return null
+  }
+  for (let attempt = 0; ; attempt++) {
+    const code = generateShareCode()
+    const { data, error } = await supabase
+      .from('albums')
+      .update({ share_code: code })
+      .eq('id', id)
+      .select('share_code')
+      .single()
+    if (!error) return (data as { share_code: string } | null)?.share_code ?? code
+    // 23505：分享码撞唯一约束（概率可忽略），换一个再试
+    if ((error as { code?: string }).code !== '23505' || attempt >= 2) throw error
+  }
+}
+
+export async function setAlbumCollabUpload(id: string, allow: boolean): Promise<void> {
+  const { error } = await supabase
+    .from('albums')
+    .update({ allow_collab_upload: allow })
+    .eq('id', id)
+  if (error) throw error
+}
+
 export async function deleteAlbum(album: Album): Promise<void> {
   const { data: photos, error: listError } = await supabase
     .from('photos')

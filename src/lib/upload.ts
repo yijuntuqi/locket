@@ -33,7 +33,9 @@ async function compressPhoto(file: File): Promise<File> {
 export async function uploadPhotos(
   albumId: string,
   ownerId: string,
-  files: File[]
+  files: File[],
+  /** 实际上传者：协作上传时是登录访客本人（默认相册 owner） */
+  uploaderId: string = ownerId
 ): Promise<UploadSummary> {
   const { data: existing, error: listError } = await supabase
     .from('photos')
@@ -58,7 +60,7 @@ export async function uploadPhotos(
         .from('photos')
         .insert({
           album_id: albumId,
-          uploader_id: ownerId,
+          uploader_id: uploaderId,
           storage_path: storagePath,
           sort_order: sortOrder,
         })
@@ -78,7 +80,7 @@ export async function uploadPhotos(
           .from('photos')
           .insert({
             album_id: albumId,
-            uploader_id: ownerId,
+            uploader_id: uploaderId,
             storage_path: storagePath,
             sort_order: sortOrder,
           })

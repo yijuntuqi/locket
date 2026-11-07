@@ -1,10 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import type { Session } from '@supabase/supabase-js'
 import { RealtimeListener } from '@/components/RealtimeListener'
 import { supabase } from '@/lib/supabase'
 
 export function RequireAuth({ children }: { children: ReactNode }) {
+  const location = useLocation()
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -34,7 +35,14 @@ export function RequireAuth({ children }: { children: ReactNode }) {
       </div>
     )
   }
-  if (!session) return <Navigate to="/login" replace />
+  // 登录后原路返回（WallPage 等受保护页用）
+  if (!session)
+    return (
+      <Navigate
+        to={`/login?next=${encodeURIComponent(location.pathname + location.search)}`}
+        replace
+      />
+    )
   return (
     <>
       {children}

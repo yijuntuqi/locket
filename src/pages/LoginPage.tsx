@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Gem } from 'lucide-react'
 import { glassPanel } from '@/lib/glass'
@@ -7,8 +7,15 @@ import { supabase } from '@/lib/supabase'
 
 type Mode = 'login' | 'signup'
 
+/** 登录后去哪：只接受站内相对路径（分享链接 /s/{code} 登录后原路返回），防开放重定向 */
+function safeNext(raw: string | null): string {
+  return raw && raw.startsWith('/') && !raw.startsWith('//') ? raw : '/'
+}
+
 export default function LoginPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const next = safeNext(searchParams.get('next'))
   const [mode, setMode] = useState<Mode>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -29,7 +36,7 @@ export default function LoginPage() {
         })
         if (signInError) throw signInError
         toast.success('登录成功')
-        navigate('/', { replace: true })
+        navigate(next, { replace: true })
       } else {
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
@@ -38,7 +45,7 @@ export default function LoginPage() {
         if (signUpError) throw signUpError
         if (data.session) {
           toast.success('登录成功')
-          navigate('/', { replace: true })
+          navigate(next, { replace: true })
         } else {
           // 后台开启 Confirm email 后走这里：留好的口子，无需改代码
           setNotice('注册成功，请查收确认邮件激活后登录')

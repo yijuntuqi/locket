@@ -24,6 +24,10 @@ const photoDef: Record<string, Deferred<PhotoWithUrl[]>> = {}
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
+    auth: {
+      // WallPage 启动即查当前用户（判 owner / 协作资格）；测试固定为相册 owner u1
+      getUser: async () => ({ data: { user: { id: 'u1' } }, error: null }),
+    },
     from: (table: string) => {
       if (table !== 'albums') throw new Error('unexpected table ' + table)
       return {
