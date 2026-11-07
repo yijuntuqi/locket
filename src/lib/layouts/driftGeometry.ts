@@ -42,13 +42,17 @@ export function computeDriftLayout(count: number, vw: number, vh: number): Drift
 
   const columns = perCol.map((photos, c) => {
     const len = photos.length
-    // 瓦片数取「≥ minRows 且是 len 的整数倍」→ 内容以 tiles 为周期无缝回绕
-    const tilesCount = Math.ceil(minRows / len) * len
+    const step = tileHeightPx + gapPx
+    // 内容周期：≥ 静态铺满所需，且是 len 的整数倍（保证 y=0 与 y=cycle 处内容一致，回绕无缝）
+    const periodRows = Math.ceil(minRows / len) * len
+    // 回绕补位：列上移接近一个周期时，视口底部需要下一周期的开头瓦片接上（否则底部露出空墙）
+    const wrapRows = Math.ceil((vh + tileHeightPx) / step)
+    const tilesCount = periodRows + wrapRows
     const tiles = Array.from({ length: tilesCount }, (_, r) => photos[r % len])
     return {
       photos,
       tiles,
-      cycleHeightPx: tilesCount * (tileHeightPx + gapPx),
+      cycleHeightPx: periodRows * step,
       xPx: (c - (cols - 1) / 2) * (DRIFT_TILE_WIDTH + gapPx),
     }
   })

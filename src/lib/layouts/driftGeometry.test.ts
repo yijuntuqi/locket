@@ -25,15 +25,19 @@ describe('computeDriftLayout 漂移墙几何', () => {
     expect(computeDriftLayout(10, 400, 800).cols).toBe(3)
   })
 
-  it('每列瓦片数是列照片数的整数倍且足以覆盖视口（无缝回绕）', () => {
+  it('每列瓦片覆盖整个漂移周期加视口（回绕补位，底部不露空）', () => {
     const vh = 800
-    const minRows = Math.ceil((vh + DRIFT_TILE_HEIGHT * 2) / (DRIFT_TILE_HEIGHT + DRIFT_GAP))
+    const step = DRIFT_TILE_HEIGHT + DRIFT_GAP
     for (const count of [1, 2, 3, 5, 8, 13, 40]) {
       const spec = computeDriftLayout(count, 1280, vh)
       for (const col of spec.columns) {
-        expect(col.tiles.length).toBeGreaterThanOrEqual(minRows)
-        expect(col.tiles.length % col.photos.length).toBe(0)
-        // 回绕周期覆盖视口：cycle - 一张高 ≥ 视口高
+        // 内容周期是列照片数的整数倍（y=0 与 y=cycle 处内容一致，回绕无缝）
+        expect(col.cycleHeightPx % (col.photos.length * step)).toBe(0)
+        // 最坏位移（cycle - step）下瓦片仍盖住视口底
+        expect(col.cycleHeightPx - step + vh + DRIFT_TILE_HEIGHT).toBeLessThanOrEqual(
+          col.tiles.length * step
+        )
+        // 周期本身足以静态铺满视口
         expect(col.cycleHeightPx - DRIFT_TILE_HEIGHT).toBeGreaterThanOrEqual(vh)
       }
     }

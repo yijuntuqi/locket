@@ -19,7 +19,16 @@ export function SceneTitle({ name, photoCount }: SceneTitleProps) {
         WebkitMaskImage: mask,
       }}
     >
-      <h1 className="font-display-gradient font-display text-4xl font-black tracking-[0.12em] md:text-6xl">
+      {/* 顶部暗化带：压住漂进标题区的亮色照片，保证大标题可读（漂移墙照片会上浮穿过此区） */}
+      <div
+        aria-hidden
+        className="absolute inset-x-[-6%] -top-20 h-60"
+        style={{
+          background:
+            'linear-gradient(to bottom, rgba(5,6,15,0.92), rgba(5,6,15,0.5) 55%, transparent)',
+        }}
+      />
+      <h1 className="font-display-gradient font-display text-4xl font-black tracking-[0.12em] drop-shadow-[0_2px_16px_rgba(0,0,0,0.85)] md:text-6xl">
         {name}
       </h1>
       <p className="text-sm text-white/60">
