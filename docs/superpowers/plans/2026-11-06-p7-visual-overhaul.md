@@ -112,6 +112,13 @@ Geist / lucide-react / tw-animate-css 均已在 package.json，无需新装。
 
 **Steps:** `npx vitest run` 全绿 + `npm run build` + `npm run lint` → dev server + playwright 截图走查（含 reduced-motion 模拟）→ 用户执行 `npm uninstall ogl` → migration 0005 应用确认 → Commit `chore(ui): 移除死依赖 ogl，reduced-motion 全覆盖核对`。
 
+**执行记录（2026-11-08）：**
+- vitest 24 文件 / 123 用例全绿；`npm run build` 通过；oxlint 仅既有类别 warning、无 error。
+- ogl 用户已 `npm uninstall`，提交 `chore(deps): 移除未使用的 ogl 依赖`（28a103a）。
+- reduced-motion 全站核对完成：全部 7 处内联动画均挂在 reduce 块覆盖的 data-testid 上（wall-card-enter / page-enter / dialog-panel / layout-menu / starfield-twinkle / drift-column + .drift-tile）。
+- migration 0005 用户已在 Supabase Dashboard 执行。
+- 截图走查进行中：登录页 1280/375 ✓、相册列表 1280 ✓、新建弹窗 ✓；剩 5 布局 × 双宽度、空状态、漂移持久化验证。
+
 ## 验证
 
 1. 每任务 `npx vitest run` 全绿、`npm run build` 通过（tsc -b）。

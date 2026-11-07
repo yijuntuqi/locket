@@ -58,10 +58,14 @@ export const WallCard = memo(function WallCard({
       }}
       onPointerLeave={() => onHoverChange(photo.id, false)}
     >
-      {/* 入场浮现层：只碰 opacity/transform，保持 preserve-3d；reduced-motion 下由全局规则关闭 */}
+      {/* 入场浮现层：只碰 opacity/transform，保持 preserve-3d；reduced-motion 下由全局规则关闭。
+          absolute inset-0 撑满卡片——带 transform 动画的它是 CardFaces 里 absolute 子层的
+          containing block，若保持 static（内容全为 absolute）高度会塌成 0，相框随之消失 */}
       <div
         data-testid="wall-card-enter"
         style={{
+          position: 'absolute',
+          inset: 0,
           transformStyle: 'preserve-3d',
           animation: 'rise-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both',
           animationDelay: `${enterDelayFor(index)}ms`,

@@ -52,10 +52,12 @@ export const PhotoWallCard = memo(function PhotoWallCard({
       }}
       onPointerLeave={() => onHoverChange(photo.id, false)}
     >
-      {/* 入场浮现层：与 WallCard 同构，reduced-motion 下由全局规则关闭 */}
+      {/* 入场浮现层：与 WallCard 同构（absolute inset-0 撑满卡片，防 absolute 子层塌 0），reduced-motion 下由全局规则关闭 */}
       <div
         data-testid="wall-card-enter"
         style={{
+          position: 'absolute',
+          inset: 0,
           transformStyle: 'preserve-3d',
           animation: 'rise-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both',
           animationDelay: `${enterDelayFor(index)}ms`,
