@@ -1,0 +1,25 @@
+{
+  "name": "Locket · 我们的照片墙",
+  "short_name": "Locket",
+  "description": "把回忆装进吊坠盒：3D 旋转照片墙",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#05060f",
+  "theme_color": "#05060f",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
