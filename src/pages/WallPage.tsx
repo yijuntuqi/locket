@@ -6,7 +6,6 @@ import type { User } from '@supabase/supabase-js'
 import { ALBUM_UPDATED_EVENT } from '@/components/RealtimeListener'
 import { ControlsBar } from '@/components/wall/ControlsBar'
 import { WallScene } from '@/components/wall/WallScene'
-import { EdgeReveal } from '@/components/wall/EdgeReveal'
 import { DustMotes, SceneLight } from '@/components/wall/SceneAtmosphere'
 import { SceneTitle } from '@/components/wall/SceneTitle'
 import { UploadButton } from '@/components/wall/UploadButton'
@@ -189,7 +188,8 @@ export default function WallPage() {
     <div className="relative h-full">
       <SceneLight />
       <DustMotes />
-      <EdgeReveal edge="top">
+      {/* 顶栏常驻：返回/登录入口固定可见，不再随触边隐藏 */}
+      <div className="fixed inset-x-0 top-0 z-30">
         <div className="flex items-center justify-between p-4">
           {user ? (
             <Link
@@ -216,7 +216,7 @@ export default function WallPage() {
             )}
           </div>
         </div>
-      </EdgeReveal>
+      </div>
 
       {uploadMessage && (
         <div className={`absolute bottom-4 left-1/2 z-10 -translate-x-1/2 px-4 py-2 text-sm text-white ${glassPill}`}>

@@ -66,6 +66,24 @@ export default function AlbumsPage() {
     return () => window.removeEventListener(ALBUMS_CHANGED_EVENT, onChanged)
   }, [refresh])
 
+  // 纪念日：以账号创建日为起点，「吊坠盒已陪伴 N 天」
+  const [anniversaryDays, setAnniversaryDays] = useState<number | null>(null)
+  useEffect(() => {
+    let mounted = true
+    supabase.auth
+      .getUser()
+      .then(({ data }) => {
+        if (!mounted || !data.user?.created_at) return
+        const days =
+          Math.floor((Date.now() - new Date(data.user.created_at).getTime()) / 86_400_000) + 1
+        if (days > 0) setAnniversaryDays(days)
+      })
+      .catch(() => undefined)
+    return () => {
+      mounted = false
+    }
+  }, [])
+
   async function handleSubmit(name: string) {
     if (!dialog) return
     setDialogError(null)
@@ -130,7 +148,11 @@ export default function AlbumsPage() {
             <h1 className="font-display-gradient font-display text-4xl font-black tracking-wide">
               我的相册
             </h1>
-            <p className="mt-1 text-sm text-white/50">把回忆装进吊坠盒</p>
+            <p className="mt-1 text-sm text-white/50">
+              {anniversaryDays != null
+                ? `这个吊坠盒已陪伴你 ${anniversaryDays} 天`
+                : '把回忆装进吊坠盒'}
+            </p>
           </div>
           <button
             onClick={() => {

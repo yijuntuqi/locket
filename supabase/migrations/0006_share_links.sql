@@ -27,14 +27,16 @@ create policy photos_collab_insert on public.photos for insert
 
 -- Storage：分享相册下的对象对所有人可读（签名 URL 生成同样走这条；
 -- 路径约定 {owner_id}/{album_id}/{photo_id}.webp）
+-- 注意：子查询里必须写 objects.name —— albums 也有 name 列，
+-- 裸写 name 会被绑定到 a.name（相册名），策略恒假
 create policy photos_storage_shared_read on storage.objects for select
   using (
     bucket_id = 'photos'
     and exists (
       select 1 from public.albums a
       where a.share_code is not null
-        and (storage.foldername(name))[1] = a.owner_id::text
-        and (storage.foldername(name))[2] = a.id::text
+        and (storage.foldername(objects.name))[1] = a.owner_id::text
+        and (storage.foldername(objects.name))[2] = a.id::text
     )
   );
 
@@ -46,8 +48,8 @@ create policy photos_storage_collab_insert on storage.objects for insert
     and exists (
       select 1 from public.albums a
       where a.share_code is not null and a.allow_collab_upload
-        and (storage.foldername(name))[1] = a.owner_id::text
-        and (storage.foldername(name))[2] = a.id::text
+        and (storage.foldername(objects.name))[1] = a.owner_id::text
+        and (storage.foldername(objects.name))[2] = a.id::text
     )
   );
 

@@ -121,10 +121,7 @@ async function renderAlbumPage(albumId: string, name: string, photos: PhotoWithU
 }
 
 
-/** 触边浮现顶栏与 Dock（隐藏面板 visibility:hidden，a11y 树查不到内部控件） */
-function revealControls() {
-  fireEvent.pointerEnter(screen.getByRole('button', { name: '显示控制栏' }))
-}
+/** 顶栏已改为常驻（P8），控制条本身常驻，无需再触边唤醒 */
 
 describe('WallPage 路由参数切换竞态', () => {
   it('切到相册 B 后，迟到的相册 A 响应不得覆盖 B 的内容', async () => {
@@ -175,7 +172,6 @@ describe('WallPage 自动旋转开关（P4）', () => {
 
   it('Dock 自动旋转默认开启，点击关闭再开启', async () => {
     await renderAlbumPage('albumRotate', '相册Rotate', PHOTOS)
-    revealControls()
     const btn = screen.getByRole('button', { name: '自动旋转' })
     expect(btn.getAttribute('aria-pressed')).toBe('true')
 
@@ -196,18 +192,12 @@ describe('WallPage 空相册（P4 修复）', () => {
   })
 })
 
-describe('WallPage 隐藏式控制层（P5）', () => {
+describe('WallPage 常驻顶栏（P8）', () => {
   const PHOTOS = [photo('p1', 0, 'albumReveal', '2025-10-01T08:00:00Z')]
 
-  it('顶栏与 Dock 默认隐藏，指针进入触发条浮现', async () => {
+  it('返回入口固定可见，不依赖触边唤醒', async () => {
     await renderAlbumPage('albumReveal', '相册Reveal', PHOTOS)
-
-    const topPanel = document.body.querySelector('[data-testid="edge-reveal-panel-top"]') as HTMLElement
-    expect(topPanel.className).toContain('opacity-0')
-
-    const strip = screen.getByRole('button', { name: '显示控制栏' })
-    fireEvent.pointerEnter(strip)
-    expect(topPanel.className).toContain('opacity-100')
+    expect(screen.getByRole('link', { name: '← 返回' })).toBeTruthy()
   })
 })
 
@@ -288,8 +278,8 @@ describe('WallPage 场景大标题（P7）', () => {
   it('空相册显示引导空状态与上传入口', async () => {
     await renderAlbumPage('albumEmpty2', '空相册2', [])
     expect(screen.getByText('这个相册还没有照片')).toBeTruthy()
-    // 空状态内的上传按钮可达（顶栏那个折叠时在可访问性树外，与既有测试约定一致）
-    expect(screen.getAllByRole('button', { name: '上传照片' }).length).toBe(1)
+    // 顶栏常驻后两个上传按钮都在可访问性树内（顶栏 + 空状态）
+    expect(screen.getAllByRole('button', { name: '上传照片' }).length).toBe(2)
   })
 })
 
